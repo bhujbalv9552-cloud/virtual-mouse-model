@@ -1,4 +1,3 @@
-ML
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -38,7 +37,7 @@ body {
   line-height: 1.6;
   min-height: 100vh;
 }
- 
+
 /* ── TOP BAR ── */
 .topbar {
   position: sticky; top: 0; z-index: 100;
@@ -53,7 +52,7 @@ body {
 .topbar-status { margin-left: auto; display: flex; align-items: center; gap: 8px; font-size: 12px; color: var(--muted); }
 .dot { width: 7px; height: 7px; border-radius: 50%; background: var(--green3); animation: pulse 2s infinite; }
 @keyframes pulse { 0%,100%{opacity:1} 50%{opacity:0.4} }
- 
+
 /* ── AUTHOR BADGE ── */
 .author-banner {
   background: var(--bg3);
@@ -84,7 +83,7 @@ body {
   padding: 10px 16px; margin: 12px 24px 0; font-size: 12px; color: #fb923c;
   display: flex; gap: 8px; align-items: flex-start;
 }
- 
+
 /* ── SIDEBAR NAV ── */
 .layout { display: flex; gap: 0; }
 .sidebar {
@@ -106,12 +105,12 @@ body {
 .nav-item:hover { color: var(--green2); background: var(--card); border-left-color: var(--border2); }
 .nav-item.active { color: var(--green); background: var(--card); border-left-color: var(--green3); }
 .nav-icon { width: 18px; text-align: center; }
- 
+
 /* ── MAIN CONTENT ── */
 .main { flex: 1; padding: 24px; overflow-x: hidden; }
 .section { display: none; }
 .section.active { display: block; }
- 
+
 /* ── CARDS ── */
 .card {
   background: var(--card);
@@ -128,20 +127,20 @@ body {
 .grid2 { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; }
 .grid3 { display: grid; grid-template-columns: repeat(3,1fr); gap: 12px; }
 .grid4 { display: grid; grid-template-columns: repeat(4,1fr); gap: 10px; }
- 
+
 /* ── STAT BOX ── */
 .stat { background: var(--bg3); border: 1px solid var(--border); border-radius: var(--radius2); padding: 12px 14px; }
 .stat-label { color: var(--muted); font-size: 11px; text-transform: uppercase; letter-spacing: 1px; margin-bottom: 4px; }
 .stat-val { color: var(--green); font-size: 20px; font-weight: bold; }
 .stat-unit { color: var(--text2); font-size: 11px; margin-top: 2px; }
- 
+
 /* ── ORGAN BAR ── */
 .organ-row { display: flex; align-items: center; gap: 10px; margin-bottom: 10px; }
 .organ-name { width: 80px; font-size: 12px; color: var(--text2); }
 .organ-bar-bg { flex: 1; height: 8px; background: var(--bg3); border-radius: 4px; overflow: hidden; }
 .organ-bar-fill { height: 100%; background: var(--green3); border-radius: 4px; transition: width 0.5s; }
 .organ-pct { width: 40px; font-size: 12px; color: var(--green2); text-align: right; }
- 
+
 /* ── SLIDERS ── */
 .param-row { margin-bottom: 14px; }
 .param-top { display: flex; justify-content: space-between; font-size: 12px; margin-bottom: 4px; }
@@ -156,7 +155,7 @@ input[type=range]::-webkit-slider-thumb {
   border-radius: 50%; background: var(--green3); cursor: pointer;
 }
 .param-note { font-size: 11px; color: var(--muted); margin-top: 3px; font-style: italic; }
- 
+
 /* ── BUTTONS ── */
 .btn {
   background: transparent; border: 1px solid var(--green3);
@@ -169,14 +168,14 @@ input[type=range]::-webkit-slider-thumb {
 .btn-danger { border-color: var(--red); color: var(--red); }
 .btn-danger:hover { background: #1a0000; }
 .btn-row { display: flex; gap: 10px; flex-wrap: wrap; margin-top: 14px; }
- 
+
 /* ── TABLE ── */
 .tbl { width: 100%; border-collapse: collapse; font-size: 13px; }
 .tbl th { color: var(--muted); font-weight: normal; text-align: left; padding: 6px 10px; border-bottom: 1px solid var(--border); font-size: 11px; text-transform: uppercase; letter-spacing: 1px; }
 .tbl td { padding: 8px 10px; border-bottom: 1px solid var(--border); }
 .tbl tr:last-child td { border-bottom: none; }
 .tbl tr:hover td { background: var(--bg3); }
- 
+
 /* ── TAGS ── */
 .tag { display: inline-block; font-size: 11px; padding: 2px 8px; border-radius: 20px; }
 .tag-green { background: #052505; color: var(--green); border: 1px solid var(--border2); }
@@ -184,7 +183,7 @@ input[type=range]::-webkit-slider-thumb {
 .tag-yellow{ background: #1a1100; color: var(--yellow); border: 1px solid #4a3500; }
 .tag-blue  { background: #030b1a; color: var(--blue);   border: 1px solid #1e3a5f; }
 .tag-muted { background: var(--bg3); color: var(--muted); border: 1px solid var(--border); }
- 
+
 /* ── TOGGLE SWITCH ── */
 .toggle-row { display: flex; justify-content: space-between; align-items: center; padding: 8px 0; border-bottom: 1px solid var(--border); }
 .toggle-row:last-child { border-bottom: none; }
@@ -194,18 +193,18 @@ input[type=range]::-webkit-slider-thumb {
 .toggle-slider:before { content:''; position:absolute; width:14px;height:14px; left:2px;top:2px; background:var(--muted); border-radius:50%; transition:0.2s; }
 .toggle input:checked + .toggle-slider { background: #052505; border-color: var(--green3); }
 .toggle input:checked + .toggle-slider:before { transform:translateX(16px); background:var(--green3); }
- 
+
 /* ── CHART ── */
 .chart-wrap { position: relative; height: 220px; margin-top: 14px; }
 .chart-placeholder { height: 220px; background: var(--bg3); border: 1px dashed var(--border2); border-radius: var(--radius2); display: flex; align-items: center; justify-content: center; color: var(--muted); font-size: 13px; }
- 
+
 /* ── LOG ── */
 .log-box { background: var(--bg); border: 1px solid var(--border); border-radius: var(--radius2); padding: 12px 14px; height: 160px; overflow-y: auto; font-size: 12px; font-family: 'Courier New', monospace; }
 .log-line { color: var(--text2); margin-bottom: 3px; }
 .log-line.ok { color: var(--green2); }
 .log-line.warn { color: var(--yellow); }
 .log-line.err { color: var(--red); }
- 
+
 /* ── REFERENCES ── */
 .ref-box { background: #030e03; border: 1px solid var(--border2); border-radius: var(--radius2); margin-top: 14px; }
 .ref-toggle { cursor: pointer; padding: 8px 12px; color: var(--green); font-size: 12px; font-weight: bold; display: flex; justify-content: space-between; user-select: none; }
@@ -216,13 +215,13 @@ input[type=range]::-webkit-slider-thumb {
 .ref-content li { margin-bottom: 5px; }
 .ref-content a { color: var(--green2); text-decoration: none; }
 .ref-content a:hover { text-decoration: underline; }
- 
+
 /* ── RESULT BOX ── */
 .result-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(120px,1fr)); gap: 10px; margin-top: 14px; }
 .result-cell { background: var(--bg3); border: 1px solid var(--border); border-radius: var(--radius2); padding: 10px 12px; text-align: center; }
 .result-cell .rv { color: var(--green); font-size: 18px; font-weight: bold; }
 .result-cell .rl { color: var(--muted); font-size: 11px; margin-top: 3px; }
- 
+
 /* ── VALIDATION PANEL ── */
 .val-row { display: flex; align-items: center; gap: 10px; padding: 8px 0; border-bottom: 1px solid var(--border); font-size: 13px; }
 .val-row:last-child { border-bottom: none; }
@@ -230,7 +229,7 @@ input[type=range]::-webkit-slider-thumb {
 .val-cross { color: var(--red); font-size: 16px; flex-shrink: 0; }
 .val-label { flex: 1; color: var(--text2); }
 .val-source { font-size: 11px; color: var(--muted); }
- 
+
 /* ── RESPONSIVE ── */
 @media(max-width:700px){
   .sidebar{ display:none; }
@@ -240,7 +239,7 @@ input[type=range]::-webkit-slider-thumb {
 </style>
 </head>
 <body>
- 
+
 <!-- TOP BAR -->
 <div class="topbar">
   <span class="topbar-logo">VMM</span>
@@ -251,7 +250,7 @@ input[type=range]::-webkit-slider-thumb {
     <span id="status-text">READY · Day 0</span>
   </div>
 </div>
- 
+
 <!-- AUTHOR BANNER -->
 <div class="author-banner">
   <div class="author-avatar">VB</div>
@@ -269,40 +268,40 @@ input[type=range]::-webkit-slider-thumb {
   <span>&#9888;</span>
   <span><strong>Disclaimer:</strong> This is a computational research simulation for academic/PhD portfolio purposes only. Not for clinical use. All models are based on peer-reviewed literature. Parameters represent in silico mouse models (C57BL/6 strain).</span>
 </div>
- 
+
 <!-- LAYOUT -->
 <div class="layout">
- 
+
 <!-- SIDEBAR -->
 <nav class="sidebar">
   <div class="nav-group">Mouse</div>
   <div class="nav-item active" onclick="showSection('physiology',this)"><span class="nav-icon">&#128049;</span> Physiology</div>
   <div class="nav-item" onclick="showSection('immune',this)"><span class="nav-icon">&#128737;</span> Immune system</div>
- 
+
   <div class="nav-group" style="margin-top:10px">Cancer</div>
   <div class="nav-item" onclick="showSection('tumor',this)"><span class="nav-icon">&#128302;</span> Tumor growth</div>
   <div class="nav-item" onclick="showSection('mutations',this)"><span class="nav-icon">&#129514;</span> Mutations &amp; lncRNA</div>
   <div class="nav-item" onclick="showSection('hallmarks',this)"><span class="nav-icon">&#9888;</span> Cancer hallmarks</div>
- 
+
   <div class="nav-group" style="margin-top:10px">Drug</div>
   <div class="nav-item" onclick="showSection('pk',this)"><span class="nav-icon">&#128138;</span> PK model</div>
   <div class="nav-item" onclick="showSection('pkpd',this)"><span class="nav-icon">&#128200;</span> PK-PD integration</div>
   <div class="nav-item" onclick="showSection('toxicity',this)"><span class="nav-icon">&#9763;</span> Organ toxicity</div>
   <div class="nav-item" onclick="showSection('resistance',this)"><span class="nav-icon">&#128260;</span> Drug resistance</div>
- 
+
   <div class="nav-group" style="margin-top:10px">AI/ML</div>
   <div class="nav-item" onclick="showSection('rl',this)"><span class="nav-icon">&#129302;</span> RL optimizer</div>
   <div class="nav-item" onclick="showSection('biomarker',this)"><span class="nav-icon">&#127991;</span> Biomarker ML</div>
   <div class="nav-item" onclick="showSection('twin',this)"><span class="nav-icon">&#128101;</span> Digital twin</div>
- 
+
   <div class="nav-group" style="margin-top:10px">Output</div>
   <div class="nav-item" onclick="showSection('full',this)"><span class="nav-icon">&#128202;</span> Full simulation</div>
   <div class="nav-item" onclick="showSection('validation',this)"><span class="nav-icon">&#9989;</span> Validation</div>
 </nav>
- 
+
 <!-- MAIN -->
 <div class="main">
- 
+
 <!-- ══ PHYSIOLOGY ══ -->
 <div id="sec-physiology" class="section active">
   <div class="card">
@@ -334,7 +333,7 @@ input[type=range]::-webkit-slider-thumb {
     </div>
   </div>
 </div>
- 
+
 <!-- ══ IMMUNE SYSTEM ══ -->
 <div id="sec-immune" class="section">
   <div class="card">
@@ -379,7 +378,7 @@ input[type=range]::-webkit-slider-thumb {
     </div>
   </div>
 </div>
- 
+
 <!-- ══ TUMOR GROWTH ══ -->
 <div id="sec-tumor" class="section">
   <div class="card">
@@ -422,7 +421,7 @@ input[type=range]::-webkit-slider-thumb {
     </div>
   </div>
 </div>
- 
+
 <!-- ══ MUTATIONS & lncRNA ══ -->
 <div id="sec-mutations" class="section">
   <div class="card">
@@ -477,7 +476,7 @@ input[type=range]::-webkit-slider-thumb {
     </div>
   </div>
 </div>
- 
+
 <!-- ══ HALLMARKS ══ -->
 <div id="sec-hallmarks" class="section">
   <div class="card">
@@ -510,7 +509,7 @@ input[type=range]::-webkit-slider-thumb {
     </div>
   </div>
 </div>
- 
+
 <!-- ══ PK MODEL ══ -->
 <div id="sec-pk" class="section">
   <div class="card">
@@ -562,7 +561,7 @@ input[type=range]::-webkit-slider-thumb {
     </div>
   </div>
 </div>
- 
+
 <!-- ══ PKPD ══ -->
 <div id="sec-pkpd" class="section">
   <div class="card">
@@ -614,7 +613,7 @@ input[type=range]::-webkit-slider-thumb {
     </div>
   </div>
 </div>
- 
+
 <!-- ══ TOXICITY ══ -->
 <div id="sec-toxicity" class="section">
   <div class="card">
@@ -651,7 +650,7 @@ input[type=range]::-webkit-slider-thumb {
     </div>
   </div>
 </div>
- 
+
 <!-- ══ RESISTANCE ══ -->
 <div id="sec-resistance" class="section">
   <div class="card">
@@ -689,7 +688,7 @@ input[type=range]::-webkit-slider-thumb {
     </div>
   </div>
 </div>
- 
+
 <!-- ══ RL OPTIMIZER ══ -->
 <div id="sec-rl" class="section">
   <div class="card">
@@ -717,7 +716,7 @@ input[type=range]::-webkit-slider-thumb {
     </div>
   </div>
 </div>
- 
+
 <!-- ══ BIOMARKER ML ══ -->
 <div id="sec-biomarker" class="section">
   <div class="card">
@@ -772,7 +771,7 @@ input[type=range]::-webkit-slider-thumb {
     </div>
   </div>
 </div>
- 
+
 <!-- ══ DIGITAL TWIN ══ -->
 <div id="sec-twin" class="section">
   <div class="card">
@@ -806,7 +805,7 @@ input[type=range]::-webkit-slider-thumb {
     </div>
   </div>
 </div>
- 
+
 <!-- ══ FULL SIMULATION ══ -->
 <div id="sec-full" class="section">
   <div class="card">
@@ -848,7 +847,7 @@ input[type=range]::-webkit-slider-thumb {
     <div class="chart-wrap" style="height:260px"><canvas id="fullChart"></canvas></div>
   </div>
 </div>
- 
+
 <!-- ══ VALIDATION ══ -->
 <div id="sec-validation" class="section">
   <div class="card">
@@ -872,21 +871,21 @@ input[type=range]::-webkit-slider-thumb {
     </div>
   </div>
 </div>
- 
+
 </div><!-- /main -->
 </div><!-- /layout -->
- 
+
 <script>
 var fullSimData = null;
 var twinDay = 0;
- 
+
 function showSection(id, el) {
   document.querySelectorAll('.section').forEach(s => s.classList.remove('active'));
   document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
   document.getElementById('sec-' + id).classList.add('active');
   if (el) el.classList.add('active');
 }
- 
+
 function toggleRef(id) {
   var c = document.getElementById(id);
   var a = document.getElementById(id + '-arrow');
@@ -896,7 +895,7 @@ function toggleRef(id) {
     c.classList.add('open'); a.innerHTML = '&#9660;';
   }
 }
- 
+
 function mkChart(id, type, labels, datasets, opts) {
   var cv = document.getElementById(id);
   if (!cv) return null;
@@ -916,7 +915,7 @@ function mkChart(id, type, labels, datasets, opts) {
   cv._chart = ch;
   return ch;
 }
- 
+
 function runImmune() {
   var days = Array.from({length:101},(_,i)=>i);
   var ctl=[], nk=[], tumor=[];
@@ -938,7 +937,7 @@ function runImmune() {
   document.getElementById('ctl-disp').textContent = ctl[100].toLocaleString();
   document.getElementById('nk-disp').textContent = nk[100].toLocaleString();
 }
- 
+
 function runTumor(model) {
   var days = Array.from({length:91},(_,i)=>i);
   var r=0.03, N0=1e6, K=1e9, alpha=0.03;
@@ -957,7 +956,7 @@ function runTumor(model) {
   document.getElementById('t90').textContent = fmt(gompertz(90));
 }
 function runAllTumor() { runTumor('all'); }
- 
+
 function updateScore() {
   var boxes = document.querySelectorAll('#sec-mutations input[type=checkbox]');
   var mults = [1.20,1.30,1.25,1.50];
@@ -975,7 +974,7 @@ function updateScore() {
   else if(score>0.5) el.innerHTML='<span class="tag tag-yellow">Medium</span>';
   else el.innerHTML='<span class="tag tag-muted">Low</span>';
 }
- 
+
 var hallmarkNames = [
   'Sustaining proliferative signaling','Evading growth suppressors',
   'Resisting cell death','Enabling replicative immortality',
@@ -1008,7 +1007,7 @@ function updateHallmarkEffect(vals) {
   document.getElementById('hm-meta').innerHTML='<span class="tag '+(active>=5?'tag-red':active>=3?'tag-yellow':'tag-muted')+'">'+meta[active]+'</span>';
 }
 buildHallmarks(presets.luad);
- 
+
 var drugParams={cisplatin:{v1:1.2,k10:0.45},dox:{v1:2.8,k10:0.31},pac:{v1:3.5,k10:0.22},erl:{v1:4.2,k10:0.18},fu:{v1:1.0,k10:0.85}};
 function setDrug(key){ var p=drugParams[key]; if(p){ document.getElementById('k10-val').textContent=p.k10.toFixed(2); } }
 function runPK(){
@@ -1038,7 +1037,7 @@ function runPK(){
   document.getElementById('auc').textContent=auc;
   document.getElementById('tec50').textContent=tec50+'h';
 }
- 
+
 function runPKPD(){
   var emax=parseFloat(document.getElementById('emax-val').textContent)||0.9;
   var ec50=parseFloat(document.getElementById('ec50-val').textContent)||2;
@@ -1057,7 +1056,7 @@ function runPKPD(){
     rows[i].cells[1].textContent=pct; rows[i].cells[2].innerHTML=grade;
   });
 }
- 
+
 function runToxicity(){
   var conc=parseFloat(document.getElementById('tox-conc-val').textContent)||3;
   var days=parseInt(document.getElementById('tox-days-val').textContent)||14;
@@ -1086,7 +1085,7 @@ function runToxicity(){
     if(el) el.innerHTML=grade(finalTox[i]);
   });
 }
- 
+
 function runResistance(){
   var drugEff=parseFloat(document.getElementById('drug-eff-val').textContent)||0.7;
   var mu=parseFloat(document.getElementById('mu-val').textContent)*1e-6||1e-6;
@@ -1112,7 +1111,7 @@ function runResistance(){
   document.getElementById('res-resist').textContent=R>1e6?(R/1e6).toFixed(2)+'M':R.toFixed(0);
   document.getElementById('res-onset').textContent=onsetDay;
 }
- 
+
 function runRL(){
   var eps=[], rewards=[], kills=[];
   for(var e=0;e<200;e++){
@@ -1130,7 +1129,7 @@ function runRL(){
   document.getElementById('rl-kill').textContent=kills[199].toFixed(1)+'%';
   document.getElementById('rl-tox').textContent=(0.3+Math.random()*0.4).toFixed(2);
 }
- 
+
 function runML(){
   var malat=parseFloat(document.getElementById('ml-malat-val').textContent)||1.5;
   var hotair=parseFloat(document.getElementById('ml-hotair-val').textContent)||1.0;
@@ -1146,7 +1145,7 @@ function runML(){
   document.getElementById('ml-risk').textContent=normRisk.toFixed(2);
   document.getElementById('ml-surv').textContent=surv.toFixed(0)+'%';
 }
- 
+
 var twinState={tv:100,sens:1e9,res:0,ctl:10000,drug:8.0,malat:1.5};
 function advanceTwin(days){
   twinDay+=days;
@@ -1173,7 +1172,7 @@ function advanceTwin(days){
   }
   mkChart('twinChart','line',days90,mc.map(function(d,i){return{label:'Trajectory '+(i+1),data:d,borderColor:'rgba(74,222,128,'+(0.3+i*0.1)+')',tension:0.3,pointRadius:0};}));
 }
- 
+
 function addLog(msg,cls){
   var box=document.getElementById('full-log');
   var line=document.createElement('div');
@@ -1182,7 +1181,7 @@ function addLog(msg,cls){
   box.appendChild(line);
   box.scrollTop=box.scrollHeight;
 }
- 
+
 function runFull(){
   var box=document.getElementById('full-log'); box.innerHTML='';
   var cancer=document.getElementById('full-cancer').value;
@@ -1215,7 +1214,7 @@ function runFull(){
     addLog('Simulation complete. Response: '+response+'. Tumor: '+finalT+'M cells.','ok');
   }, 2500);
 }
- 
+
 function exportCSV(){
   if(!fullSimData){ alert('Run simulation first.'); return; }
   var rows=['Day,Tumor_cells,Drug'];
