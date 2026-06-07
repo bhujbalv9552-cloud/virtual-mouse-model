@@ -1,0 +1,1828 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Virtual Mouse Model — AI Cancer Simulation</title>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;600&family=DM+Sans:wght@300;400;500;600&display=swap');
+
+  :root {
+    --bg: #0a0e1a;
+    --bg2: #0f1525;
+    --bg3: #151c30;
+    --border: rgba(255,255,255,0.07);
+    --border2: rgba(255,255,255,0.12);
+    --text: #e8eaf0;
+    --text2: #8892a4;
+    --text3: #4a5568;
+    --green: #00e5a0;
+    --green-d: #00b07a;
+    --red: #ff5f6d;
+    --amber: #ffa040;
+    --blue: #4a9eff;
+    --purple: #a78bfa;
+    --teal: #22d3ee;
+    --font: 'DM Sans', sans-serif;
+    --mono: 'JetBrains Mono', monospace;
+  }
+
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body { background: var(--bg); color: var(--text); font-family: var(--font); font-size: 14px; min-height: 100vh; }
+
+  /* Layout */
+  .app { display: grid; grid-template-columns: 260px 1fr; grid-template-rows: 56px 1fr; height: 100vh; overflow: hidden; }
+  .topbar { grid-column: 1/-1; background: var(--bg2); border-bottom: 1px solid var(--border); display: flex; align-items: center; padding: 0 20px; gap: 16px; z-index: 10; }
+  .sidebar { background: var(--bg2); border-right: 1px solid var(--border); overflow-y: auto; padding: 16px 0; }
+  .main { overflow-y: auto; padding: 24px; background: var(--bg); }
+
+  /* Topbar */
+  .logo { font-family: var(--mono); font-size: 13px; font-weight: 600; color: var(--green); letter-spacing: 0.05em; }
+  .logo span { color: var(--text2); font-weight: 400; }
+  .top-badges { display: flex; gap: 8px; margin-left: auto; }
+  .tbadge { font-size: 11px; padding: 3px 10px; border-radius: 20px; font-weight: 500; }
+  .tbadge-g { background: rgba(0,229,160,0.1); color: var(--green); border: 1px solid rgba(0,229,160,0.2); }
+  .tbadge-r { background: rgba(255,95,109,0.1); color: var(--red); border: 1px solid rgba(255,95,109,0.2); }
+  .status-dot { width: 7px; height: 7px; border-radius: 50%; background: var(--green); box-shadow: 0 0 6px var(--green); }
+
+  /* Sidebar */
+  .sb-section { padding: 6px 16px 2px; font-size: 10px; font-family: var(--mono); color: var(--text3); letter-spacing: 0.1em; text-transform: uppercase; margin-top: 10px; }
+  .sb-item { display: flex; align-items: center; gap: 10px; padding: 8px 16px; cursor: pointer; color: var(--text2); font-size: 13px; transition: all .15s; border-left: 2px solid transparent; }
+  .sb-item:hover { background: var(--bg3); color: var(--text); }
+  .sb-item.active { background: rgba(0,229,160,0.06); color: var(--green); border-left-color: var(--green); }
+  .sb-icon { font-size: 15px; width: 18px; text-align: center; }
+  .sb-badge { margin-left: auto; font-size: 10px; font-family: var(--mono); background: var(--bg3); color: var(--text3); padding: 1px 6px; border-radius: 3px; }
+
+  /* Cards */
+  .card { background: var(--bg2); border: 1px solid var(--border); border-radius: 10px; padding: 18px; }
+  .card-sm { background: var(--bg3); border: 1px solid var(--border); border-radius: 8px; padding: 14px; }
+  .grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; }
+  .grid-3 { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 14px; }
+  .grid-4 { display: grid; grid-template-columns: repeat(4,1fr); gap: 12px; }
+
+  /* Section pages */
+  .page { display: none; }
+  .page.active { display: block; }
+  .page-title { font-size: 20px; font-weight: 600; margin-bottom: 4px; }
+  .page-sub { color: var(--text2); font-size: 13px; margin-bottom: 24px; }
+
+  /* Metric cards */
+  .metric { background: var(--bg2); border: 1px solid var(--border); border-radius: 8px; padding: 14px; }
+  .metric-label { font-size: 11px; color: var(--text3); font-family: var(--mono); text-transform: uppercase; letter-spacing: 0.05em; margin-bottom: 6px; }
+  .metric-val { font-size: 22px; font-weight: 600; font-family: var(--mono); }
+  .metric-sub { font-size: 11px; color: var(--text2); margin-top: 3px; }
+  .v-green { color: var(--green); }
+  .v-red { color: var(--red); }
+  .v-amber { color: var(--amber); }
+  .v-blue { color: var(--blue); }
+  .v-purple { color: var(--purple); }
+  .v-teal { color: var(--teal); }
+
+  /* Controls */
+  .ctrl-row { display: flex; align-items: center; gap: 10px; margin-bottom: 12px; }
+  .ctrl-label { font-size: 12px; color: var(--text2); width: 140px; flex-shrink: 0; }
+  .ctrl-val { font-family: var(--mono); font-size: 12px; color: var(--green); width: 60px; text-align: right; flex-shrink: 0; }
+  input[type=range] { flex: 1; accent-color: var(--green); cursor: pointer; height: 4px; }
+  select { background: var(--bg3); color: var(--text); border: 1px solid var(--border2); border-radius: 6px; padding: 7px 10px; font-size: 13px; font-family: var(--font); cursor: pointer; width: 100%; }
+  select:focus { outline: none; border-color: var(--green); }
+
+  /* Buttons */
+  .btn { padding: 9px 18px; border-radius: 7px; border: none; cursor: pointer; font-family: var(--font); font-size: 13px; font-weight: 500; transition: all .15s; }
+  .btn-primary { background: var(--green); color: #0a0e1a; }
+  .btn-primary:hover { background: var(--green-d); transform: translateY(-1px); }
+  .btn-primary:active { transform: translateY(0); }
+  .btn-secondary { background: var(--bg3); color: var(--text); border: 1px solid var(--border2); }
+  .btn-secondary:hover { border-color: var(--green); color: var(--green); }
+  .btn-danger { background: rgba(255,95,109,0.1); color: var(--red); border: 1px solid rgba(255,95,109,0.2); }
+  .btn-row { display: flex; gap: 10px; margin-top: 16px; flex-wrap: wrap; }
+
+  /* Table */
+  table { width: 100%; border-collapse: collapse; font-size: 13px; }
+  th { text-align: left; padding: 8px 12px; color: var(--text3); font-family: var(--mono); font-size: 11px; text-transform: uppercase; letter-spacing: 0.05em; border-bottom: 1px solid var(--border); font-weight: 400; }
+  td { padding: 9px 12px; border-bottom: 1px solid rgba(255,255,255,0.04); }
+  tr:hover td { background: rgba(255,255,255,0.02); }
+
+  /* Progress bars */
+  .pbar-wrap { background: var(--bg3); border-radius: 3px; height: 5px; overflow: hidden; margin-top: 6px; }
+  .pbar { height: 100%; border-radius: 3px; transition: width .5s ease; }
+  .pbar-g { background: var(--green); }
+  .pbar-r { background: var(--red); }
+  .pbar-a { background: var(--amber); }
+  .pbar-b { background: var(--blue); }
+
+  /* Code block */
+  .code { background: #060910; border: 1px solid var(--border); border-radius: 8px; padding: 14px; font-family: var(--mono); font-size: 12px; line-height: 1.7; color: #a8b4c8; overflow-x: auto; }
+  .kw { color: var(--purple); } .fn { color: var(--blue); } .str { color: var(--green); } .cm { color: #4a5568; } .num { color: var(--amber); }
+
+  /* Chart container */
+  .chart-wrap { position: relative; height: 220px; margin-top: 14px; }
+  .chart-wrap-lg { position: relative; height: 280px; margin-top: 14px; }
+
+  /* Log */
+  .log { background: #060910; border: 1px solid var(--border); border-radius: 8px; padding: 12px; font-family: var(--mono); font-size: 11px; line-height: 1.8; color: var(--text2); max-height: 180px; overflow-y: auto; }
+  .log-entry { border-bottom: none; }
+  .log-t { color: var(--text3); }
+  .log-ok { color: var(--green); }
+  .log-warn { color: var(--amber); }
+  .log-err { color: var(--red); }
+
+  /* Badges */
+  .badge { display: inline-block; font-size: 11px; padding: 2px 8px; border-radius: 4px; font-weight: 500; font-family: var(--mono); }
+  .badge-g { background: rgba(0,229,160,0.12); color: var(--green); }
+  .badge-r { background: rgba(255,95,109,0.12); color: var(--red); }
+  .badge-a { background: rgba(255,160,64,0.12); color: var(--amber); }
+  .badge-b { background: rgba(74,158,255,0.12); color: var(--blue); }
+  .badge-p { background: rgba(167,139,250,0.12); color: var(--purple); }
+
+  /* Dividers */
+  .divider { border: none; border-top: 1px solid var(--border); margin: 18px 0; }
+  .section-title { font-size: 11px; font-family: var(--mono); color: var(--text3); text-transform: uppercase; letter-spacing: 0.1em; margin-bottom: 12px; }
+
+  /* Organ map */
+  .organ-grid { display: grid; grid-template-columns: repeat(3,1fr); gap: 10px; }
+  .organ-card { background: var(--bg3); border: 1px solid var(--border); border-radius: 8px; padding: 12px; }
+  .organ-name { font-size: 12px; font-weight: 500; margin-bottom: 4px; text-transform: capitalize; }
+  .organ-val { font-family: var(--mono); font-size: 11px; color: var(--text2); }
+
+  /* Hallmark grid */
+  .hallmark-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+  .hallmark-item { display: flex; align-items: center; gap: 8px; padding: 8px 10px; background: var(--bg3); border-radius: 6px; border: 1px solid var(--border); }
+  .hallmark-dot { width: 8px; height: 8px; border-radius: 50%; flex-shrink: 0; }
+  .hallmark-text { font-size: 12px; color: var(--text2); }
+  .hallmark-item.active .hallmark-text { color: var(--text); }
+
+  /* Survival line */
+  .survival-bar { height: 8px; background: var(--bg3); border-radius: 4px; overflow: hidden; margin: 8px 0; }
+  .survival-fill { height: 100%; border-radius: 4px; transition: width 0.8s ease; }
+
+  /* Tooltip */
+  .tooltip-wrap { position: relative; display: inline-block; }
+  .tooltip-wrap:hover .tooltip { display: block; }
+  .tooltip { display: none; position: absolute; bottom: calc(100% + 6px); left: 50%; transform: translateX(-50%); background: #1e2640; border: 1px solid var(--border2); border-radius: 6px; padding: 6px 10px; font-size: 11px; color: var(--text); white-space: nowrap; z-index: 100; }
+
+  /* Scrollbar */
+  ::-webkit-scrollbar { width: 5px; height: 5px; }
+  ::-webkit-scrollbar-track { background: transparent; }
+  ::-webkit-scrollbar-thumb { background: var(--bg3); border-radius: 3px; }
+
+  /* Animated pulse on active sim */
+  @keyframes pulse { 0%,100%{opacity:1} 50%{opacity:0.5} }
+  .pulsing { animation: pulse 1.2s infinite; }
+
+  /* Gap utilities */
+  .gap-sm { margin-bottom: 10px; }
+  .gap-md { margin-bottom: 16px; }
+  .gap-lg { margin-bottom: 24px; }
+  .flex { display: flex; align-items: center; gap: 10px; }
+  .flex-between { display: flex; align-items: center; justify-content: space-between; }
+</style>
+</head>
+<body>
+<div class="app">
+
+  <!-- Topbar -->
+  <header class="topbar">
+    <div class="status-dot" id="statusDot"></div>
+    <div class="logo">VMM <span>/ Virtual Mouse Model v1.0</span></div>
+    <div class="top-badges">
+      <span class="tbadge tbadge-g" id="topStatus">● READY</span>
+      <span class="tbadge" style="background:rgba(74,158,255,0.1);color:var(--blue);border:1px solid rgba(74,158,255,0.2)" id="dayBadge">Day 0</span>
+    </div>
+  </header>
+
+  <!-- Sidebar -->
+  <nav class="sidebar">
+    <div class="sb-section">Mouse</div>
+    <div class="sb-item active" onclick="nav('physiology',this)"><span class="sb-icon">🐭</span>Physiology</div>
+    <div class="sb-item" onclick="nav('immune',this)"><span class="sb-icon">🛡️</span>Immune system</div>
+
+    <div class="sb-section">Cancer</div>
+    <div class="sb-item" onclick="nav('tumor',this)"><span class="sb-icon">🔬</span>Tumor growth</div>
+    <div class="sb-item" onclick="nav('mutations',this)"><span class="sb-icon">🧬</span>Mutations & lncRNA</div>
+    <div class="sb-item" onclick="nav('hallmarks',this)"><span class="sb-icon">⚠️</span>Cancer hallmarks</div>
+
+    <div class="sb-section">Drug</div>
+    <div class="sb-item" onclick="nav('pk',this)"><span class="sb-icon">💊</span>PK model</div>
+    <div class="sb-item" onclick="nav('pd',this)"><span class="sb-icon">📈</span>PK-PD integration</div>
+    <div class="sb-item" onclick="nav('toxicity',this)"><span class="sb-icon">☣️</span>Organ toxicity</div>
+    <div class="sb-item" onclick="nav('resistance',this)"><span class="sb-icon">🔄</span>Drug resistance</div>
+
+    <div class="sb-section">AI/ML</div>
+    <div class="sb-item" onclick="nav('rl',this)"><span class="sb-icon">🤖</span>RL optimizer</div>
+    <div class="sb-item" onclick="nav('biomarker',this)"><span class="sb-icon">🏷️</span>Biomarker ML</div>
+    <div class="sb-item" onclick="nav('twin',this)"><span class="sb-icon">👥</span>Digital twin</div>
+
+    <div class="sb-section">Output</div>
+    <div class="sb-item" onclick="nav('dashboard',this)"><span class="sb-icon">📊</span>Full simulation</div>
+    <div class="sb-item" onclick="nav('code',this)"><span class="sb-icon">📄</span>Python code</div>
+  </nav>
+
+  <!-- Main content -->
+  <main class="main">
+
+    <!-- ===== PHYSIOLOGY ===== -->
+    <div class="page active" id="page-physiology">
+      <div class="page-title">Mouse physiology</div>
+      <div class="page-sub">C57BL/6 mouse — 25g — 8 weeks old — organ compartment model</div>
+
+      <div class="grid-4 gap-md">
+        <div class="metric"><div class="metric-label">Body weight</div><div class="metric-val v-green" id="bw">25.0g</div><div class="metric-sub">C57BL/6 strain</div></div>
+        <div class="metric"><div class="metric-label">Blood volume</div><div class="metric-val v-blue">1.8 mL</div><div class="metric-sub">72 mL/kg</div></div>
+        <div class="metric"><div class="metric-label">Heart rate</div><div class="metric-val v-amber">600 bpm</div><div class="metric-sub">Normal range</div></div>
+        <div class="metric"><div class="metric-label">Body temp</div><div class="metric-val v-teal">37.0°C</div><div class="metric-sub">Core temperature</div></div>
+      </div>
+
+      <div class="grid-2 gap-md">
+        <div class="card">
+          <div class="section-title">Organ compartments</div>
+          <div class="organ-grid">
+            <div class="organ-card" id="oc-liver"><div class="organ-name">🫀 Liver</div><div class="organ-val">Vol: 5.5% BW · Flow: 25%</div><div class="pbar-wrap"><div class="pbar pbar-g" id="ob-liver" style="width:100%"></div></div><div class="organ-val" id="ov-liver">Health: 1.00</div></div>
+            <div class="organ-card" id="oc-kidney"><div class="organ-name">🫘 Kidney</div><div class="organ-val">Vol: 1.7% BW · Flow: 22%</div><div class="pbar-wrap"><div class="pbar pbar-g" id="ob-kidney" style="width:100%"></div></div><div class="organ-val" id="ov-kidney">Health: 1.00</div></div>
+            <div class="organ-card" id="oc-lung"><div class="organ-name">🫁 Lung</div><div class="organ-val">Vol: 0.8% BW · Flow: 100%</div><div class="pbar-wrap"><div class="pbar pbar-g" id="ob-lung" style="width:100%"></div></div><div class="organ-val" id="ov-lung">Health: 1.00</div></div>
+            <div class="organ-card" id="oc-brain"><div class="organ-name">🧠 Brain</div><div class="organ-val">Vol: 1.6% BW · Flow: 12%</div><div class="pbar-wrap"><div class="pbar pbar-g" id="ob-brain" style="width:100%"></div></div><div class="organ-val" id="ov-brain">Health: 1.00</div></div>
+            <div class="organ-card" id="oc-heart"><div class="organ-name">❤️ Heart</div><div class="organ-val">Vol: 0.5% BW · Flow: 4%</div><div class="pbar-wrap"><div class="pbar pbar-g" id="ob-heart" style="width:100%"></div></div><div class="organ-val" id="ov-heart">Health: 1.00</div></div>
+            <div class="organ-card" id="oc-spleen"><div class="organ-name">💜 Spleen</div><div class="organ-val">Vol: 0.4% BW · Flow: 3%</div><div class="pbar-wrap"><div class="pbar pbar-g" id="ob-spleen" style="width:100%"></div></div><div class="organ-val" id="ov-spleen">Health: 1.00</div></div>
+          </div>
+        </div>
+        <div class="card">
+          <div class="section-title">Mouse parameters</div>
+          <div class="ctrl-row"><span class="ctrl-label">Body weight (g)</span><input type="range" min="18" max="35" step="0.5" value="25" id="sl-bw" oninput="setBW(this.value)"><span class="ctrl-val" id="cv-bw">25.0</span></div>
+          <div class="ctrl-row"><span class="ctrl-label">Age (weeks)</span><input type="range" min="6" max="52" step="1" value="8" id="sl-age"><span class="ctrl-val">8</span></div>
+          <div class="ctrl-row"><span class="ctrl-label">Tumor burden</span><input type="range" min="0" max="100" step="1" value="0" id="sl-tumor" oninput="updateTumorBurden(this.value)"><span class="ctrl-val" id="cv-tumor">0%</span></div>
+          <hr class="divider">
+          <div class="section-title">Vital signs (real-time)</div>
+          <table>
+            <tr><td style="color:var(--text2)">Heart rate</td><td><span class="badge badge-g" id="vs-hr">600 bpm</span></td></tr>
+            <tr><td style="color:var(--text2)">Resp. rate</td><td><span class="badge badge-b">150 /min</span></td></tr>
+            <tr><td style="color:var(--text2)">Blood glucose</td><td><span class="badge badge-a" id="vs-glucose">7.5 mM</span></td></tr>
+            <tr><td style="color:var(--text2)">Overall health</td><td><span class="badge badge-g" id="vs-health">100%</span></td></tr>
+          </table>
+        </div>
+      </div>
+    </div>
+
+    <!-- ===== IMMUNE ===== -->
+    <div class="page" id="page-immune">
+      <div class="page-title">Immune system simulation</div>
+      <div class="page-sub">Kirschner-Panetta ODE model — CTL · NK cells · Tregs · IL-2</div>
+      <div class="grid-4 gap-md">
+        <div class="metric"><div class="metric-label">CTL count</div><div class="metric-val v-blue" id="im-ctl">10,000</div><div class="metric-sub">CD8+ T cells</div></div>
+        <div class="metric"><div class="metric-label">NK cells</div><div class="metric-val v-green" id="im-nk">5,000</div><div class="metric-sub">Natural killer</div></div>
+        <div class="metric"><div class="metric-label">Tregs</div><div class="metric-val v-amber" id="im-treg">2,000</div><div class="metric-sub">Immunosuppressive</div></div>
+        <div class="metric"><div class="metric-label">IL-2 level</div><div class="metric-val v-purple" id="im-il2">1,000</div><div class="metric-sub">Cytokine signal</div></div>
+      </div>
+      <div class="grid-2">
+        <div class="card">
+          <div class="section-title">ODE parameters</div>
+          <div class="ctrl-row"><span class="ctrl-label">CTL kill rate (k_ctl)</span><input type="range" min="0" max="100" step="1" value="50" id="sl-kctl" oninput="document.getElementById('cv-kctl').textContent=(this.value/1e7).toFixed(1)+'e-7'"><span class="ctrl-val" id="cv-kctl">5.0e-7</span></div>
+          <div class="ctrl-row"><span class="ctrl-label">NK kill rate (k_nk)</span><input type="range" min="0" max="100" step="1" value="40"><span class="ctrl-val">2.0e-8</span></div>
+          <div class="ctrl-row"><span class="ctrl-label">Treg induction</span><input type="range" min="0" max="100" step="1" value="50"><span class="ctrl-val">0.05</span></div>
+          <div class="ctrl-row"><span class="ctrl-label">IL-2 stimulation</span><input type="range" min="0" max="100" step="1" value="60"><span class="ctrl-val">0.10</span></div>
+          <div class="btn-row">
+            <button class="btn btn-primary" onclick="runImmuneODE()">▶ Run ODE (100 days)</button>
+          </div>
+        </div>
+        <div class="card">
+          <div class="section-title">Immune-tumor dynamics</div>
+          <div class="chart-wrap"><canvas id="chart-immune"></canvas></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ===== TUMOR ===== -->
+    <div class="page" id="page-tumor">
+      <div class="page-title">Tumor growth models</div>
+      <div class="page-sub">Exponential → Logistic → Gompertz → Hahnfeldt angiogenesis</div>
+      <div class="grid-2">
+        <div class="card">
+          <div class="section-title">Model & parameters</div>
+          <div class="ctrl-row"><span class="ctrl-label">Growth model</span></div>
+          <select id="sel-tmodel" onchange="updateTumorModel()" style="margin-bottom:12px">
+            <option value="exp">Exponential — dN/dt = r·N</option>
+            <option value="logistic">Logistic — Verhulst model</option>
+            <option value="gompertz" selected>Gompertz — most realistic</option>
+            <option value="hahnfeldt">Hahnfeldt — angiogenesis coupled</option>
+          </select>
+          <div class="ctrl-row"><span class="ctrl-label">Growth rate r (day⁻¹)</span><input type="range" min="1" max="10" step="1" value="3" id="sl-r" oninput="document.getElementById('cv-r').textContent='0.0'+this.value"><span class="ctrl-val" id="cv-r">0.03</span></div>
+          <div class="ctrl-row"><span class="ctrl-label">Initial cells (N₀)</span><input type="range" min="1" max="9" step="1" value="6" id="sl-n0" oninput="document.getElementById('cv-n0').textContent='1e'+this.value"><span class="ctrl-val" id="cv-n0">1e6</span></div>
+          <div class="ctrl-row"><span class="ctrl-label">Carrying capacity</span><input type="range" min="8" max="12" step="1" value="9" id="sl-k" oninput="document.getElementById('cv-k').textContent='1e'+this.value"><span class="ctrl-val" id="cv-k">1e9</span></div>
+          <div class="ctrl-row"><span class="ctrl-label">Simulation days</span><input type="range" min="30" max="365" step="5" value="90" id="sl-tdays" oninput="document.getElementById('cv-tdays').textContent=this.value+'d'"><span class="ctrl-val" id="cv-tdays">90d</span></div>
+          <div class="btn-row">
+            <button class="btn btn-primary" onclick="runTumorModel()">▶ Simulate</button>
+            <button class="btn btn-secondary" onclick="runAllTumorModels()">Compare all 4</button>
+          </div>
+        </div>
+        <div class="card">
+          <div class="section-title">Tumor volume over time</div>
+          <div class="chart-wrap-lg"><canvas id="chart-tumor"></canvas></div>
+          <div class="grid-3" style="margin-top:12px">
+            <div class="card-sm"><div style="font-size:11px;color:var(--text3)">Day 30</div><div class="metric-val v-amber" style="font-size:16px" id="tm-d30">—</div></div>
+            <div class="card-sm"><div style="font-size:11px;color:var(--text3)">Day 60</div><div class="metric-val v-amber" style="font-size:16px" id="tm-d60">—</div></div>
+            <div class="card-sm"><div style="font-size:11px;color:var(--text3)">Day 90</div><div class="metric-val v-red" style="font-size:16px" id="tm-d90">—</div></div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ===== MUTATIONS ===== -->
+    <div class="page" id="page-mutations">
+      <div class="page-title">Mutations & lncRNA profile</div>
+      <div class="page-sub">TP53 · KRAS · EGFR · MYC oncogenic mutations + MALAT1 · HOTAIR · NEAT1 · UCA1</div>
+      <div class="grid-2">
+        <div class="card">
+          <div class="section-title">Oncogenic mutations</div>
+          <table>
+            <tr><th>Gene</th><th>Variant</th><th>Status</th><th>Growth ×</th><th>Apoptosis ×</th></tr>
+            <tr><td>TP53</td><td>R175H</td><td><label style="display:flex;align-items:center;gap:6px;cursor:pointer"><input type="checkbox" id="mut-tp53" onchange="updateMutations()"> <span id="mut-tp53-badge" class="badge badge-r" style="display:none">ACTIVE</span><span style="color:var(--text3);font-size:11px">inactive</span></label></td><td>×1.20</td><td>×0.50</td></tr>
+            <tr><td>KRAS</td><td>G12D</td><td><label style="display:flex;align-items:center;gap:6px;cursor:pointer"><input type="checkbox" id="mut-kras" onchange="updateMutations()"> <span id="mut-kras-badge" class="badge badge-r" style="display:none">ACTIVE</span><span style="color:var(--text3);font-size:11px">inactive</span></label></td><td>×1.30</td><td>×0.70</td></tr>
+            <tr><td>EGFR</td><td>L858R</td><td><label style="display:flex;align-items:center;gap:6px;cursor:pointer"><input type="checkbox" id="mut-egfr" onchange="updateMutations()"> <span id="mut-egfr-badge" class="badge badge-r" style="display:none">ACTIVE</span><span style="color:var(--text3);font-size:11px">inactive</span></label></td><td>×1.25</td><td>×0.80</td></tr>
+            <tr><td>MYC</td><td>AMP</td><td><label style="display:flex;align-items:center;gap:6px;cursor:pointer"><input type="checkbox" id="mut-myc" onchange="updateMutations()"> <span id="mut-myc-badge" class="badge badge-r" style="display:none">ACTIVE</span><span style="color:var(--text3);font-size:11px">inactive</span></label></td><td>×1.50</td><td>×0.60</td></tr>
+          </table>
+          <hr class="divider">
+          <div class="flex-between">
+            <span style="color:var(--text2);font-size:13px">Net growth multiplier:</span>
+            <span class="metric-val v-red" id="net-growth-mult">×1.00</span>
+          </div>
+        </div>
+        <div class="card">
+          <div class="section-title">lncRNA expression levels (0–3 scale)</div>
+          <div class="ctrl-row"><span class="ctrl-label">MALAT1 (invasion)</span><input type="range" min="0" max="30" step="1" value="10" id="sl-malat1" oninput="updateLncRNA('malat1',this.value/10)"><span class="ctrl-val" id="cv-malat1">1.0</span></div>
+          <div class="ctrl-row"><span class="ctrl-label">HOTAIR (growth)</span><input type="range" min="0" max="30" step="1" value="5" id="sl-hotair" oninput="updateLncRNA('hotair',this.value/10)"><span class="ctrl-val" id="cv-hotair">0.5</span></div>
+          <div class="ctrl-row"><span class="ctrl-label">NEAT1 (hypoxia)</span><input type="range" min="0" max="30" step="1" value="10" id="sl-neat1" oninput="updateLncRNA('neat1',this.value/10)"><span class="ctrl-val" id="cv-neat1">1.0</span></div>
+          <div class="ctrl-row"><span class="ctrl-label">UCA1 (Warburg)</span><input type="range" min="0" max="30" step="1" value="3" id="sl-uca1" oninput="updateLncRNA('uca1',this.value/10)"><span class="ctrl-val" id="cv-uca1">0.3</span></div>
+          <hr class="divider">
+          <div class="flex-between gap-sm">
+            <span style="color:var(--text2);font-size:13px">Oncogenic score:</span>
+            <span class="metric-val v-purple" id="lncrna-score">0.12</span>
+          </div>
+          <div class="pbar-wrap"><div class="pbar" style="background:var(--purple)" id="pb-lncrna" width="12%"></div></div>
+          <div style="margin-top:8px;font-size:11px;color:var(--text3)">Score > 0.5 = high oncogenic potential from lncRNA profile</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ===== HALLMARKS ===== -->
+    <div class="page" id="page-hallmarks">
+      <div class="page-title">Cancer hallmarks</div>
+      <div class="page-sub">Hanahan & Weinberg 2022 — 10 computational switches</div>
+      <div class="grid-2">
+        <div class="card">
+          <div class="section-title">Hallmark activation status</div>
+          <div class="hallmark-grid" id="hallmark-grid"></div>
+        </div>
+        <div class="card">
+          <div class="section-title">Cancer type preset</div>
+          <select id="sel-cancer" onchange="loadCancerPreset()" style="margin-bottom:14px">
+            <option value="luad">Lung adenocarcinoma (LUAD)</option>
+            <option value="brca">Breast cancer (BRCA)</option>
+            <option value="crc">Colorectal cancer (CRC)</option>
+            <option value="paad">Pancreatic adenocarcinoma (PAAD)</option>
+            <option value="hnscc">Head & neck squamous (HNSCC)</option>
+          </select>
+          <div id="cancer-profile"></div>
+          <hr class="divider">
+          <div class="section-title">Active hallmarks effect on simulation</div>
+          <div class="grid-2">
+            <div class="card-sm"><div style="font-size:11px;color:var(--text3)">Proliferation boost</div><div class="metric-val v-red" id="hm-prolif" style="font-size:16px">+0%</div></div>
+            <div class="card-sm"><div style="font-size:11px;color:var(--text3)">Apoptosis reduced</div><div class="metric-val v-amber" id="hm-apop" style="font-size:16px">-0%</div></div>
+            <div class="card-sm"><div style="font-size:11px;color:var(--text3)">Immune evasion</div><div class="metric-val v-purple" id="hm-immune" style="font-size:16px">0%</div></div>
+            <div class="card-sm"><div style="font-size:11px;color:var(--text3)">Metastasis risk</div><div class="metric-val v-blue" id="hm-meta" style="font-size:16px">Low</div></div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ===== PK ===== -->
+    <div class="page" id="page-pk">
+      <div class="page-title">Pharmacokinetic model</div>
+      <div class="page-sub">2-compartment open PK model — IV bolus dosing</div>
+      <div class="grid-2">
+        <div class="card">
+          <div class="section-title">Drug & dose parameters</div>
+          <div class="ctrl-row"><span class="ctrl-label">Drug</span></div>
+          <select id="sel-drug" onchange="loadDrugPreset()" style="margin-bottom:12px">
+            <option value="cisplatin">Cisplatin — V1=1.2, k10=0.45</option>
+            <option value="doxorubicin">Doxorubicin — V1=2.8, k10=0.31</option>
+            <option value="paclitaxel">Paclitaxel — V1=3.5, k10=0.22</option>
+            <option value="erlotinib">Erlotinib — V1=4.2, k10=0.18</option>
+            <option value="5fu">5-Fluorouracil — V1=1.0, k10=0.85</option>
+          </select>
+          <div class="ctrl-row"><span class="ctrl-label">Dose (mg/kg)</span><input type="range" min="1" max="50" step="1" value="10" id="sl-dose" oninput="document.getElementById('cv-dose').textContent=this.value+'mg/kg'"><span class="ctrl-val" id="cv-dose">10mg/kg</span></div>
+          <div class="ctrl-row"><span class="ctrl-label">V1 central (mL)</span><input type="range" min="5" max="60" step="1" value="12" id="sl-v1" oninput="document.getElementById('cv-v1').textContent=(this.value/10).toFixed(1)"><span class="ctrl-val" id="cv-v1">1.2</span></div>
+          <div class="ctrl-row"><span class="ctrl-label">k10 elimination</span><input type="range" min="1" max="20" step="1" value="5" id="sl-k10" oninput="document.getElementById('cv-k10').textContent=(this.value/10).toFixed(1)+'h⁻¹'"><span class="ctrl-val" id="cv-k10">0.5h⁻¹</span></div>
+          <div class="ctrl-row"><span class="ctrl-label">Sim duration (h)</span><input type="range" min="12" max="168" step="6" value="72" id="sl-pkh" oninput="document.getElementById('cv-pkh').textContent=this.value+'h'"><span class="ctrl-val" id="cv-pkh">72h</span></div>
+          <div class="btn-row">
+            <button class="btn btn-primary" onclick="runPKModel()">▶ Run PK</button>
+          </div>
+          <hr class="divider">
+          <div class="grid-2">
+            <div class="card-sm"><div style="font-size:11px;color:var(--text3)">Peak Cmax</div><div class="metric-val v-green" id="pk-cmax" style="font-size:16px">—</div></div>
+            <div class="card-sm"><div style="font-size:11px;color:var(--text3)">Half-life t½</div><div class="metric-val v-blue" id="pk-t12" style="font-size:16px">—</div></div>
+            <div class="card-sm"><div style="font-size:11px;color:var(--text3)">AUC (mg·h/L)</div><div class="metric-val v-amber" id="pk-auc" style="font-size:16px">—</div></div>
+            <div class="card-sm"><div style="font-size:11px;color:var(--text3)">Time > EC50</div><div class="metric-val v-purple" id="pk-tec50" style="font-size:16px">—</div></div>
+          </div>
+        </div>
+        <div class="card">
+          <div class="section-title">Plasma & tissue concentration</div>
+          <div class="chart-wrap-lg"><canvas id="chart-pk"></canvas></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ===== PD ===== -->
+    <div class="page" id="page-pd">
+      <div class="page-title">PK-PD integrated model</div>
+      <div class="page-sub">Hill equation PD · Emax model · tumor kill rate linked to plasma concentration</div>
+      <div class="grid-2">
+        <div class="card">
+          <div class="section-title">Hill equation parameters</div>
+          <div class="ctrl-row"><span class="ctrl-label">Emax (max effect)</span><input type="range" min="50" max="100" step="5" value="90" id="sl-emax" oninput="document.getElementById('cv-emax').textContent=(this.value/100).toFixed(2)"><span class="ctrl-val" id="cv-emax">0.90</span></div>
+          <div class="ctrl-row"><span class="ctrl-label">EC50 (potency mg/L)</span><input type="range" min="1" max="50" step="1" value="20" id="sl-ec50" oninput="document.getElementById('cv-ec50').textContent=(this.value/10).toFixed(1)+'mg/L'"><span class="ctrl-val" id="cv-ec50">2.0mg/L</span></div>
+          <div class="ctrl-row"><span class="ctrl-label">Hill coeff n</span><input type="range" min="5" max="30" step="1" value="15" id="sl-hn" oninput="document.getElementById('cv-hn').textContent=(this.value/10).toFixed(1)"><span class="ctrl-val" id="cv-hn">1.5</span></div>
+          <div class="ctrl-row"><span class="ctrl-label">k_kill rate</span><input type="range" min="1" max="30" step="1" value="10" id="sl-kkill" oninput="document.getElementById('cv-kkill').textContent=(this.value/100).toFixed(2)"><span class="ctrl-val" id="cv-kkill">0.10</span></div>
+          <div class="btn-row">
+            <button class="btn btn-primary" onclick="runPKPD()">▶ Run PK-PD simulation</button>
+          </div>
+          <hr class="divider">
+          <div class="section-title">Effect at key concentrations</div>
+          <table>
+            <tr><th>Concentration</th><th>Effect %</th><th>Grade</th></tr>
+            <tr><td>0.5 mg/L</td><td id="eff-05">—</td><td>—</td></tr>
+            <tr><td>1.0 mg/L</td><td id="eff-10">—</td><td>—</td></tr>
+            <tr><td>2.0 mg/L</td><td id="eff-20">—</td><td>—</td></tr>
+            <tr><td>5.0 mg/L</td><td id="eff-50">—</td><td>—</td></tr>
+          </table>
+        </div>
+        <div class="card">
+          <div class="section-title">Tumor response under drug treatment</div>
+          <div class="chart-wrap-lg"><canvas id="chart-pkpd"></canvas></div>
+          <div class="grid-2" style="margin-top:12px">
+            <div class="card-sm"><div style="font-size:11px;color:var(--text3)">Tumor at day 30</div><div class="metric-val" style="font-size:16px" id="pd-d30">—</div></div>
+            <div class="card-sm"><div style="font-size:11px;color:var(--text3)">Response class</div><div class="metric-val" style="font-size:16px" id="pd-resp">—</div></div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ===== TOXICITY ===== -->
+    <div class="page" id="page-toxicity">
+      <div class="page-title">Organ toxicity model</div>
+      <div class="page-sub">CTCAE grading — accumulation vs repair ODE per organ</div>
+      <div class="grid-4 gap-md">
+        <div class="metric"><div class="metric-label">Liver (ALAT)</div><div class="metric-val" id="tox-liver-v">0.00</div><div class="metric-sub" id="tox-liver-g">Grade 0</div></div>
+        <div class="metric"><div class="metric-label">Kidney (Creat)</div><div class="metric-val" id="tox-kidney-v">0.00</div><div class="metric-sub" id="tox-kidney-g">Grade 0</div></div>
+        <div class="metric"><div class="metric-label">Heart (cTnI)</div><div class="metric-val" id="tox-heart-v">0.00</div><div class="metric-sub" id="tox-heart-g">Grade 0</div></div>
+        <div class="metric"><div class="metric-label">Bone marrow</div><div class="metric-val" id="tox-bm-v">0.00</div><div class="metric-sub" id="tox-bm-g">Grade 0</div></div>
+      </div>
+      <div class="grid-2">
+        <div class="card">
+          <div class="section-title">Toxicity simulation parameters</div>
+          <div class="ctrl-row"><span class="ctrl-label">Drug conc (mg/L)</span><input type="range" min="0" max="100" step="1" value="30" id="sl-toxconc" oninput="document.getElementById('cv-toxconc').textContent=(this.value/10).toFixed(1)+'mg/L'"><span class="ctrl-val" id="cv-toxconc">3.0mg/L</span></div>
+          <div class="ctrl-row"><span class="ctrl-label">k_tox rate</span><input type="range" min="1" max="20" step="1" value="5" id="sl-ktox" oninput="document.getElementById('cv-ktox').textContent=(this.value/100).toFixed(2)"><span class="ctrl-val" id="cv-ktox">0.05</span></div>
+          <div class="ctrl-row"><span class="ctrl-label">k_repair rate</span><input type="range" min="1" max="10" step="1" value="2" id="sl-krep" oninput="document.getElementById('cv-krep').textContent=(this.value/100).toFixed(2)"><span class="ctrl-val" id="cv-krep">0.02</span></div>
+          <div class="ctrl-row"><span class="ctrl-label">gamma (nonlinearity)</span><input type="range" min="10" max="30" step="1" value="15" id="sl-gamma" oninput="document.getElementById('cv-gamma').textContent=(this.value/10).toFixed(1)"><span class="ctrl-val" id="cv-gamma">1.5</span></div>
+          <div class="ctrl-row"><span class="ctrl-label">Days exposed</span><input type="range" min="1" max="30" step="1" value="14" id="sl-toxdays" oninput="document.getElementById('cv-toxdays').textContent=this.value+'d'"><span class="ctrl-val" id="cv-toxdays">14d</span></div>
+          <div class="btn-row"><button class="btn btn-primary" onclick="runToxicity()">▶ Simulate toxicity</button></div>
+        </div>
+        <div class="card">
+          <div class="section-title">Toxicity over time</div>
+          <div class="chart-wrap-lg"><canvas id="chart-tox"></canvas></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ===== RESISTANCE ===== -->
+    <div class="page" id="page-resistance">
+      <div class="page-title">Drug resistance model</div>
+      <div class="page-sub">Goldie-Coldman two-population evolutionary model</div>
+      <div class="grid-4 gap-md">
+        <div class="metric"><div class="metric-label">Sensitive cells</div><div class="metric-val v-green" id="res-s">1.00e9</div><div class="metric-sub">Fraction: 100%</div></div>
+        <div class="metric"><div class="metric-label">Resistant cells</div><div class="metric-val v-red" id="res-r">0</div><div class="metric-sub" id="res-rfrac">Fraction: 0%</div></div>
+        <div class="metric"><div class="metric-label">Mutation rate</div><div class="metric-val v-amber">1e-6</div><div class="metric-sub">Per cell division</div></div>
+        <div class="metric"><div class="metric-label">Resistance onset</div><div class="metric-val v-purple" id="res-onset">—</div><div class="metric-sub">Day of emergence</div></div>
+      </div>
+      <div class="grid-2">
+        <div class="card">
+          <div class="section-title">Resistance parameters</div>
+          <div class="ctrl-row"><span class="ctrl-label">Drug effect (0-1)</span><input type="range" min="0" max="100" step="5" value="70" id="sl-de" oninput="document.getElementById('cv-de').textContent=(this.value/100).toFixed(2)"><span class="ctrl-val" id="cv-de">0.70</span></div>
+          <div class="ctrl-row"><span class="ctrl-label">Mutation rate (×10⁻⁶)</span><input type="range" min="1" max="20" step="1" value="10" id="sl-mu" oninput="document.getElementById('cv-mu').textContent=(this.value/10).toFixed(1)+'e-6'"><span class="ctrl-val" id="cv-mu">1.0e-6</span></div>
+          <div class="ctrl-row"><span class="ctrl-label">Resistant growth r_R</span><input type="range" min="10" max="40" step="1" value="25" id="sl-rr"><span class="ctrl-val">0.025</span></div>
+          <div class="ctrl-row"><span class="ctrl-label">Sim days</span><input type="range" min="30" max="180" step="10" value="90" id="sl-resdays" oninput="document.getElementById('cv-resdays').textContent=this.value+'d'"><span class="ctrl-val" id="cv-resdays">90d</span></div>
+          <div class="btn-row"><button class="btn btn-primary" onclick="runResistance()">▶ Simulate resistance</button></div>
+        </div>
+        <div class="card">
+          <div class="section-title">Sensitive vs resistant populations</div>
+          <div class="chart-wrap-lg"><canvas id="chart-res"></canvas></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ===== RL ===== -->
+    <div class="page" id="page-rl">
+      <div class="page-title">Reinforcement learning dose optimizer</div>
+      <div class="page-sub">PPO agent · state=tumor+toxicity+resistance · action=dose · reward=kill−toxicity</div>
+      <div class="grid-4 gap-md">
+        <div class="metric"><div class="metric-label">Episode</div><div class="metric-val v-green" id="rl-ep">0</div><div class="metric-sub">/ 200</div></div>
+        <div class="metric"><div class="metric-label">Cum. reward</div><div class="metric-val v-purple" id="rl-reward">0.0</div><div class="metric-sub">Current episode</div></div>
+        <div class="metric"><div class="metric-label">Tumor kill</div><div class="metric-val v-green" id="rl-kill">0%</div><div class="metric-sub">vs standard protocol</div></div>
+        <div class="metric"><div class="metric-label">Toxicity score</div><div class="metric-val v-amber" id="rl-tox">0.00</div><div class="metric-sub">Avg organ score</div></div>
+      </div>
+      <div class="grid-2">
+        <div class="card">
+          <div class="section-title">Agent configuration</div>
+          <div class="ctrl-row"><span class="ctrl-label">Max dose (mg/kg)</span><input type="range" min="5" max="50" step="5" value="20" id="sl-maxdose" oninput="document.getElementById('cv-maxdose').textContent=this.value+'mg/kg'"><span class="ctrl-val" id="cv-maxdose">20mg/kg</span></div>
+          <div class="ctrl-row"><span class="ctrl-label">Reward w₁ (kill)</span><input type="range" min="1" max="40" step="1" value="20" id="sl-w1" oninput="document.getElementById('cv-w1').textContent=(this.value/10).toFixed(1)"><span class="ctrl-val" id="cv-w1">2.0</span></div>
+          <div class="ctrl-row"><span class="ctrl-label">Reward w₂ (tox)</span><input type="range" min="1" max="30" step="1" value="15" id="sl-w2" oninput="document.getElementById('cv-w2').textContent=(this.value/10).toFixed(1)"><span class="ctrl-val" id="cv-w2">1.5</span></div>
+          <div class="ctrl-row"><span class="ctrl-label">Reward w₃ (resist)</span><input type="range" min="1" max="20" step="1" value="8" id="sl-w3" oninput="document.getElementById('cv-w3').textContent=(this.value/10).toFixed(1)"><span class="ctrl-val" id="cv-w3">0.8</span></div>
+          <div class="ctrl-row"><span class="ctrl-label">Treatment days</span><input type="range" min="30" max="90" step="5" value="60" id="sl-rldays" oninput="document.getElementById('cv-rldays').textContent=this.value+'d'"><span class="ctrl-val" id="cv-rldays">60d</span></div>
+          <div class="btn-row">
+            <button class="btn btn-primary" onclick="runRL()">▶ Train & optimize</button>
+            <button class="btn btn-secondary" onclick="compareProtocols()">Compare protocols</button>
+          </div>
+        </div>
+        <div class="card">
+          <div class="section-title">AI dosing schedule vs standard protocol</div>
+          <div class="chart-wrap-lg"><canvas id="chart-rl"></canvas></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ===== BIOMARKER ===== -->
+    <div class="page" id="page-biomarker">
+      <div class="page-title">Biomarker ML model</div>
+      <div class="page-sub">Random Forest + XGBoost · feature importance · SHAP-style analysis</div>
+      <div class="grid-2">
+        <div class="card">
+          <div class="section-title">Feature importance (simulated RF + XGBoost)</div>
+          <div class="chart-wrap-lg"><canvas id="chart-biomarker"></canvas></div>
+        </div>
+        <div class="card">
+          <div class="section-title">Patient response predictor</div>
+          <div class="ctrl-row"><span class="ctrl-label">MALAT1 expression</span><input type="range" min="0" max="30" step="1" value="15" id="sl-bm-malat1" oninput="updateBiomarkerPrediction()"><span class="ctrl-val" id="cv-bm-malat1">1.5</span></div>
+          <div class="ctrl-row"><span class="ctrl-label">HOTAIR expression</span><input type="range" min="0" max="30" step="1" value="10" id="sl-bm-hotair" oninput="updateBiomarkerPrediction()"><span class="ctrl-val" id="cv-bm-hotair">1.0</span></div>
+          <div class="ctrl-row"><span class="ctrl-label">TP53 status</span><input type="range" min="0" max="1" step="1" value="0" id="sl-bm-tp53" oninput="updateBiomarkerPrediction()"><span class="ctrl-val" id="cv-bm-tp53">WT</span></div>
+          <div class="ctrl-row"><span class="ctrl-label">KRAS status</span><input type="range" min="0" max="1" step="1" value="0" id="sl-bm-kras" oninput="updateBiomarkerPrediction()"><span class="ctrl-val" id="cv-bm-kras">WT</span></div>
+          <hr class="divider">
+          <div class="section-title">Prediction output</div>
+          <div class="grid-2">
+            <div class="card-sm"><div style="font-size:11px;color:var(--text3)">Response probability</div><div class="metric-val" id="bm-resp-prob" style="font-size:20px">—</div></div>
+            <div class="card-sm"><div style="font-size:11px;color:var(--text3)">Response class</div><div class="metric-val" id="bm-resp-class" style="font-size:16px">—</div></div>
+            <div class="card-sm"><div style="font-size:11px;color:var(--text3)">Risk score</div><div class="metric-val" id="bm-risk" style="font-size:16px">—</div></div>
+            <div class="card-sm"><div style="font-size:11px;color:var(--text3)">Survival (2yr)</div><div class="metric-val" id="bm-surv" style="font-size:16px">—</div></div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ===== DIGITAL TWIN ===== -->
+    <div class="page" id="page-twin">
+      <div class="page-title">Digital twin</div>
+      <div class="page-sub">State sync · Bayesian calibration · Monte Carlo uncertainty quantification</div>
+      <div class="grid-2">
+        <div class="card">
+          <div class="section-title">Current state vector</div>
+          <table>
+            <tr><th>Parameter</th><th>Value</th><th>Uncertainty</th></tr>
+            <tr><td>Tumor volume (mm³)</td><td id="tw-tumor">—</td><td><span class="badge badge-g">±5%</span></td></tr>
+            <tr><td>Sensitive cells</td><td id="tw-sensitive">—</td><td><span class="badge badge-g">±8%</span></td></tr>
+            <tr><td>Resistant cells</td><td id="tw-resistant">—</td><td><span class="badge badge-a">±15%</span></td></tr>
+            <tr><td>CTL count</td><td id="tw-ctl">—</td><td><span class="badge badge-g">±10%</span></td></tr>
+            <tr><td>Plasma drug (mg/L)</td><td id="tw-drug">—</td><td><span class="badge badge-b">±3%</span></td></tr>
+            <tr><td>MALAT1 level</td><td id="tw-malat1">—</td><td><span class="badge badge-p">±20%</span></td></tr>
+            <tr><td>Liver toxicity</td><td id="tw-livertox">—</td><td><span class="badge badge-g">±5%</span></td></tr>
+          </table>
+          <div class="btn-row">
+            <button class="btn btn-primary" onclick="runTwin()">▶ Advance 1 day</button>
+            <button class="btn btn-secondary" onclick="runTwin30()">▶ Advance 30 days</button>
+          </div>
+        </div>
+        <div class="card">
+          <div class="section-title">Monte Carlo trajectory forecast (n=50)</div>
+          <div class="chart-wrap-lg"><canvas id="chart-twin"></canvas></div>
+          <div style="font-size:11px;color:var(--text3);margin-top:8px">Shaded band = 95% confidence interval across 50 simulated trajectories</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ===== FULL SIMULATION DASHBOARD ===== -->
+    <div class="page" id="page-dashboard">
+      <div class="page-title">Full simulation dashboard</div>
+      <div class="page-sub">Run the complete Virtual Mouse Model — all modules in one 90-day simulation</div>
+
+      <div class="grid-2 gap-md">
+        <div class="card">
+          <div class="section-title">Simulation configuration</div>
+          <div class="ctrl-row"><span class="ctrl-label">Cancer type</span></div>
+          <select id="full-cancer" style="margin-bottom:10px">
+            <option>LUAD (Lung)</option><option>BRCA (Breast)</option><option>CRC (Colorectal)</option><option>HNSCC</option>
+          </select>
+          <div class="ctrl-row"><span class="ctrl-label">Drug</span></div>
+          <select id="full-drug" style="margin-bottom:10px">
+            <option>Cisplatin (10 mg/kg)</option><option>Doxorubicin (8 mg/kg)</option><option>Paclitaxel (15 mg/kg)</option><option>Erlotinib (25 mg/kg)</option>
+          </select>
+          <div class="ctrl-row"><span class="ctrl-label">Dosing schedule</span></div>
+          <select id="full-schedule" style="margin-bottom:10px">
+            <option>Every 7 days (standard)</option><option>Every 3 days (dense)</option><option>Continuous low dose</option><option>AI-optimized (RL)</option>
+          </select>
+          <div class="ctrl-row"><span class="ctrl-label">TP53 mutation</span><input type="checkbox" id="full-tp53" style="width:auto;margin-left:4px"></div>
+          <div class="ctrl-row"><span class="ctrl-label">KRAS mutation</span><input type="checkbox" id="full-kras" style="width:auto;margin-left:4px"></div>
+          <div class="ctrl-row"><span class="ctrl-label">MALAT1 overexp.</span><input type="checkbox" id="full-malat1" style="width:auto;margin-left:4px"></div>
+          <div class="btn-row">
+            <button class="btn btn-primary" id="fullRunBtn" onclick="runFullSim()">▶ Run full simulation (90 days)</button>
+          </div>
+        </div>
+        <div class="card">
+          <div class="section-title">Simulation log</div>
+          <div class="log" id="simLog">
+            <div class="log-entry"><span class="log-t">[00:00]</span> <span class="log-ok">VMM initialized — awaiting run</span></div>
+          </div>
+        </div>
+      </div>
+
+      <div class="grid-4 gap-md" style="margin-top:14px">
+        <div class="metric"><div class="metric-label">Final tumor</div><div class="metric-val" id="full-tumor">—</div><div class="metric-sub" id="full-tumor-sub">Day 90</div></div>
+        <div class="metric"><div class="metric-label">Response</div><div class="metric-val" id="full-resp">—</div><div class="metric-sub">RECIST criteria</div></div>
+        <div class="metric"><div class="metric-label">Max toxicity</div><div class="metric-val" id="full-tox">—</div><div class="metric-sub">Worst organ grade</div></div>
+        <div class="metric"><div class="metric-label">Resistance</div><div class="metric-val" id="full-resist">—</div><div class="metric-sub">At day 90</div></div>
+      </div>
+
+      <div class="card gap-md" style="margin-top:14px">
+        <div class="section-title">Multi-metric overview — 90 days</div>
+        <div class="chart-wrap-lg"><canvas id="chart-full"></canvas></div>
+      </div>
+    </div>
+
+    <!-- ===== PYTHON CODE ===== -->
+    <div class="page" id="page-code">
+      <div class="page-title">Python implementation</div>
+      <div class="page-sub">Complete runnable code for each module — copy & run</div>
+      <div style="margin-bottom:12px">
+        <select onchange="showCode(this.value)" style="width:300px">
+          <option value="physiology">mouse_physiology.py</option>
+          <option value="pk">pharmacokinetics.py</option>
+          <option value="pd">pharmacodynamics.py</option>
+          <option value="tumor">tumor_growth.py</option>
+          <option value="immune">immune_system.py</option>
+          <option value="lncrna">lncrna.py</option>
+          <option value="mutations">mutations.py</option>
+          <option value="toxicity">toxicity.py</option>
+          <option value="resistance">resistance.py</option>
+          <option value="rl">rl_environment.py</option>
+          <option value="twin">digital_twin.py</option>
+          <option value="main">main.py (entry point)</option>
+        </select>
+      </div>
+      <div class="code" id="code-display"></div>
+    </div>
+
+  </main>
+</div>
+
+<script>
+// =============================================
+// GLOBAL STATE
+// =============================================
+const state = {
+  bw: 25,
+  organs: { liver:1, kidney:1, lung:1, brain:1, heart:1, spleen:1 },
+  tumor: 1e6,
+  immune: { CTL: 1e4, NK: 5e3, Treg: 2e3, IL2: 1e3 },
+  pk: { C1: 0, C2: 0 },
+  lncrna: { malat1: 1.0, hotair: 0.5, neat1: 1.0, uca1: 0.3 },
+  mutations: { tp53: false, kras: false, egfr: false, myc: false },
+  twin: { tumor: 1e6, sensitive: 1e9, resistant: 1e3, ctl: 1e4, drug: 0, malat1: 1.0, livertox: 0, day: 0 },
+  charts: {}
+};
+
+// =============================================
+// NAV
+// =============================================
+function nav(page, el) {
+  document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+  document.querySelectorAll('.sb-item').forEach(i => i.classList.remove('active'));
+  document.getElementById('page-'+page).classList.add('active');
+  el.classList.add('active');
+  if(page === 'code') showCode('physiology');
+  if(page === 'biomarker') initBiomarkerChart();
+  if(page === 'hallmarks') initHallmarks();
+  if(page === 'twin') initTwinChart();
+}
+
+// =============================================
+// CHART DEFAULTS
+// =============================================
+Chart.defaults.color = '#8892a4';
+Chart.defaults.borderColor = 'rgba(255,255,255,0.07)';
+Chart.defaults.font.family = "'JetBrains Mono', monospace";
+Chart.defaults.font.size = 10;
+
+function mkChart(id, type, datasets, labels, opts={}) {
+  const ctx = document.getElementById(id);
+  if(!ctx) return null;
+  if(state.charts[id]) state.charts[id].destroy();
+  state.charts[id] = new Chart(ctx, {
+    type, data: { labels, datasets },
+    options: { responsive:true, maintainAspectRatio:false, plugins:{ legend:{ labels:{ boxWidth:10, padding:12 } } }, ...opts }
+  });
+  return state.charts[id];
+}
+
+// =============================================
+// UTILITIES
+// =============================================
+function fmtN(n) {
+  if(n >= 1e12) return (n/1e12).toFixed(2)+'T';
+  if(n >= 1e9) return (n/1e9).toFixed(2)+'B';
+  if(n >= 1e6) return (n/1e6).toFixed(2)+'M';
+  if(n >= 1e3) return (n/1e3).toFixed(1)+'K';
+  return n.toFixed(2);
+}
+
+function linspace(a,b,n) {
+  const arr=[]; const step=(b-a)/(n-1);
+  for(let i=0;i<n;i++) arr.push(+(a+step*i).toFixed(4));
+  return arr;
+}
+
+function expDecay(C0, k, t) { return C0 * Math.exp(-k*t); }
+
+function gradeColor(score) {
+  if(score<0.1) return 'var(--green)';
+  if(score<0.3) return 'var(--teal)';
+  if(score<0.5) return 'var(--amber)';
+  if(score<0.7) return 'var(--red)';
+  return '#ff1a1a';
+}
+
+function gradeLabel(score) {
+  if(score<0.1) return 'Grade 0';
+  if(score<0.3) return 'Grade 1';
+  if(score<0.5) return 'Grade 2';
+  if(score<0.7) return 'Grade 3';
+  return 'Grade 4';
+}
+
+function addLog(msg, type='ok') {
+  const log = document.getElementById('simLog');
+  const time = String(Math.floor(Date.now()/1000)%3600).padStart(5,'0');
+  const cls = type==='ok'?'log-ok':type==='warn'?'log-warn':'log-err';
+  log.innerHTML += `<div class="log-entry"><span class="log-t">[${time}]</span> <span class="${cls}">${msg}</span></div>`;
+  log.scrollTop = log.scrollHeight;
+}
+
+// =============================================
+// PHYSIOLOGY
+// =============================================
+function setBW(v) {
+  state.bw = parseFloat(v);
+  document.getElementById('bw').textContent = v+'g';
+  document.getElementById('cv-bw').textContent = v;
+}
+
+function updateTumorBurden(v) {
+  document.getElementById('cv-tumor').textContent = v+'%';
+  const burden = v/100;
+  // organ health degrades with tumor burden
+  const organs = ['liver','kidney','lung','brain','heart','spleen'];
+  const weights = [0.4, 0.3, 0.6, 0.2, 0.2, 0.3];
+  organs.forEach((o,i) => {
+    const health = Math.max(0, 1 - burden * weights[i]);
+    state.organs[o] = health;
+    document.getElementById('ob-'+o).style.width = (health*100)+'%';
+    document.getElementById('ob-'+o).className = 'pbar ' + (health>0.6?'pbar-g':health>0.3?'pbar-a':'pbar-r');
+    document.getElementById('ov-'+o).textContent = 'Health: '+health.toFixed(2);
+  });
+  const avg = organs.reduce((a,o)=>a+state.organs[o],0)/organs.length;
+  document.getElementById('vs-health').textContent = (avg*100).toFixed(0)+'%';
+  document.getElementById('vs-health').className = 'badge '+(avg>0.7?'badge-g':avg>0.4?'badge-a':'badge-r');
+}
+
+// =============================================
+// IMMUNE ODE
+// =============================================
+function runImmuneODE() {
+  const days = 100, dt = 0.1, steps = days/dt;
+  const p = { r:0.03, K:1e9, k_ctl:1e-7, b_ctl:1e4, k_nk:2e-8,
+              sigma_n:1e4, mu_e:0.03, mu_n:0.04, mu_l:0.33,
+              c_e:0.035, alpha_l:0.1, k_treg:0.05, mu_treg:0.02 };
+  let T=1e5, E=1e4, N=5e3, L=1e3, Treg=2e3;
+  const ts=[], Ts=[], Es=[], Ns=[];
+  for(let i=0;i<steps;i++) {
+    if(i%10===0){ ts.push(+(i*dt).toFixed(1)); Ts.push(T); Es.push(E); Ns.push(N); }
+    const dT = p.r*T*(1-T/p.K) - p.k_ctl*E*T/(T+p.b_ctl) - p.k_nk*N*T;
+    const dE = p.c_e*E*T/(T+1e4) + p.alpha_l*L - p.mu_e*E;
+    const dN = p.sigma_n - p.mu_n*N - 0.01*T*N/1e6;
+    const dL = p.alpha_l*E - p.mu_l*L - p.k_treg*Treg*L/1e3;
+    const dTreg = 0.001 + p.k_treg*T/1e7 - p.mu_treg*Treg;
+    T = Math.max(0, T+dT*dt); E = Math.max(0, E+dE*dt);
+    N = Math.max(0, N+dN*dt); L = Math.max(0, L+dL*dt);
+    Treg = Math.max(0, Treg+dTreg*dt);
+  }
+  // Normalize for display
+  const Tnorm = Ts.map(v=>v/1e5), Enorm = Es.map(v=>v/1e4), Nnorm = Ns.map(v=>v/5e3);
+  mkChart('chart-immune','line',[
+    {label:'Tumor (×10⁵)',data:Tnorm,borderColor:'var(--red)',tension:0.3,pointRadius:0,borderWidth:2},
+    {label:'CTL (×10⁴)',data:Enorm,borderColor:'var(--blue)',tension:0.3,pointRadius:0,borderWidth:2},
+    {label:'NK (×10³)',data:Nnorm,borderColor:'var(--green)',tension:0.3,pointRadius:0,borderWidth:2},
+  ],ts,{scales:{x:{title:{display:true,text:'Days'}},y:{title:{display:true,text:'Relative count'}}}});
+  document.getElementById('im-ctl').textContent = fmtN(E);
+  document.getElementById('im-nk').textContent = fmtN(N);
+  document.getElementById('im-treg').textContent = fmtN(Treg);
+  document.getElementById('im-il2').textContent = fmtN(L);
+}
+
+// =============================================
+// TUMOR GROWTH MODELS
+// =============================================
+function runTumorModel() {
+  const model = document.getElementById('sel-tmodel').value;
+  const r = parseFloat(document.getElementById('sl-r').value)/100;
+  const N0 = Math.pow(10, parseInt(document.getElementById('sl-n0').value));
+  const K = Math.pow(10, parseInt(document.getElementById('sl-k').value));
+  const days = parseInt(document.getElementById('sl-tdays').value);
+  const ts = linspace(0, days, 200);
+  let Ns;
+  if(model==='exp') {
+    Ns = ts.map(t => N0 * Math.exp(r*t));
+  } else if(model==='logistic') {
+    Ns = ts.map(t => K / (1 + ((K-N0)/N0)*Math.exp(-r*t)));
+  } else if(model==='gompertz') {
+    const alpha=r*0.8;
+    Ns = ts.map(t => N0 * Math.exp((Math.log(K/N0))*(1-Math.exp(-alpha*t))));
+  } else {
+    // Hahnfeldt: simplified
+    let T=N0, V=N0*2; const b=0.08,d=0.002,lam=0.01;
+    const tArr=[], TArr=[];
+    const dt2=days/200;
+    for(let i=0;i<=200;i++){
+      tArr.push(i*dt2); TArr.push(T);
+      const dT=-lam*T*Math.log(T/V);
+      const dV=b*T-d*Math.pow(T,2/3)*V;
+      T=Math.max(1,T+dT*dt2); V=Math.max(1,V+dV*dt2);
+    }
+    Ns=TArr;
+  }
+  const getNearDay = (d) => { const i=Math.round(d/days*199); return Ns[i]||0; };
+  document.getElementById('tm-d30').textContent = fmtN(getNearDay(30));
+  document.getElementById('tm-d60').textContent = fmtN(getNearDay(60));
+  document.getElementById('tm-d90').textContent = fmtN(getNearDay(Math.min(90,days)));
+  mkChart('chart-tumor','line',[{label:'Tumor cells',data:Ns,borderColor:'var(--red)',backgroundColor:'rgba(255,95,109,0.06)',fill:true,tension:0.3,pointRadius:0,borderWidth:2}],ts,{scales:{x:{title:{display:true,text:'Days'}},y:{type:'logarithmic',title:{display:true,text:'Tumor cells (log)'}}}});
+}
+
+function runAllTumorModels() {
+  const N0=1e6, K=1e9, r=0.03, days=90;
+  const ts=linspace(0,days,180);
+  const expN = ts.map(t=>N0*Math.exp(r*t));
+  const logN = ts.map(t=>K/(1+((K-N0)/N0)*Math.exp(-r*t)));
+  const alpha=0.024;
+  const gompN = ts.map(t=>N0*Math.exp(Math.log(K/N0)*(1-Math.exp(-alpha*t))));
+  let T=N0,V=N0*2; const hN=[]; const dt2=days/180;
+  for(let i=0;i<180;i++){hN.push(T);const dT=-0.01*T*Math.log(T/V);const dV=0.08*T-0.002*Math.pow(T,2/3)*V;T=Math.max(1,T+dT*dt2);V=Math.max(1,V+dV*dt2);}
+  mkChart('chart-tumor','line',[
+    {label:'Exponential',data:expN,borderColor:'var(--red)',tension:0.3,pointRadius:0,borderWidth:2},
+    {label:'Logistic',data:logN,borderColor:'var(--amber)',tension:0.3,pointRadius:0,borderWidth:2},
+    {label:'Gompertz',data:gompN,borderColor:'var(--green)',tension:0.3,pointRadius:0,borderWidth:2},
+    {label:'Hahnfeldt',data:hN,borderColor:'var(--blue)',tension:0.3,pointRadius:0,borderWidth:2},
+  ],ts,{scales:{x:{title:{display:true,text:'Days'}},y:{type:'logarithmic',title:{display:true,text:'Tumor cells (log)'}}}});
+}
+
+// =============================================
+// MUTATIONS
+// =============================================
+function updateMutations() {
+  const muts = ['tp53','kras','egfr','myc'];
+  const mults = {tp53:1.2,kras:1.3,egfr:1.25,myc:1.5};
+  let net=1.0;
+  muts.forEach(m => {
+    const cb=document.getElementById('mut-'+m);
+    const badge=document.getElementById('mut-'+m+'-badge');
+    state.mutations[m]=cb.checked;
+    badge.style.display=cb.checked?'inline-block':'none';
+    if(cb.checked) net*=mults[m];
+  });
+  document.getElementById('net-growth-mult').textContent='×'+net.toFixed(2);
+  document.getElementById('net-growth-mult').style.color=net>1.5?'var(--red)':net>1.2?'var(--amber)':'var(--green)';
+}
+
+function updateLncRNA(key, val) {
+  state.lncrna[key]=val;
+  document.getElementById('cv-'+key).textContent=val.toFixed(1);
+  // oncogenic score
+  let score=0;
+  score+=Math.max(0,state.lncrna.malat1-1)*0.3;
+  score+=Math.max(0,state.lncrna.hotair-0.5)*0.4;
+  score+=Math.max(0,state.lncrna.neat1-1)*0.2;
+  score+=Math.max(0,state.lncrna.uca1-0.3)*0.5;
+  score=Math.min(1,score);
+  document.getElementById('lncrna-score').textContent=score.toFixed(2);
+  document.getElementById('pb-lncrna').style.width=(score*100)+'%';
+}
+
+// =============================================
+// HALLMARKS
+// =============================================
+const hallmarkData = [
+  {name:'Sustaining proliferative signaling',effect:'proliferation'},
+  {name:'Evading growth suppressors',effect:'proliferation'},
+  {name:'Resisting cell death',effect:'apoptosis'},
+  {name:'Enabling replicative immortality',effect:'proliferation'},
+  {name:'Inducing angiogenesis',effect:'angiogenesis'},
+  {name:'Activating invasion & metastasis',effect:'metastasis'},
+  {name:'Reprogramming metabolism',effect:'warburg'},
+  {name:'Evading immune destruction',effect:'immune'},
+  {name:'Tumor-promoting inflammation',effect:'inflammation'},
+  {name:'Genomic instability',effect:'mutation'},
+];
+const cancerPresets = {
+  luad:{active:[0,1,2,4,7],tp53:true,kras:true},
+  brca:{active:[0,2,3,5,7],tp53:true,egfr:false},
+  crc:{active:[0,1,2,5,9],kras:true},
+  paad:{active:[0,1,2,4,5,8],kras:true,tp53:true},
+  hnscc:{active:[0,2,7,8],egfr:true},
+};
+const dotColors = ['var(--red)','var(--red)','var(--amber)','var(--green)','var(--blue)','var(--purple)','var(--amber)','var(--teal)','var(--red)','var(--amber)'];
+
+function initHallmarks() {
+  const grid=document.getElementById('hallmark-grid');
+  grid.innerHTML='';
+  hallmarkData.forEach((h,i)=>{
+    const d=document.createElement('div');
+    d.className='hallmark-item';
+    d.id='hm-'+i;
+    d.innerHTML=`<div class="hallmark-dot" style="background:${dotColors[i]};opacity:0.3" id="hmdot-${i}"></div><div class="hallmark-text">${h.name}</div>`;
+    grid.appendChild(d);
+  });
+}
+
+function loadCancerPreset() {
+  const t=document.getElementById('sel-cancer').value;
+  const preset=cancerPresets[t]||{active:[0,1,2]};
+  hallmarkData.forEach((_,i)=>{
+    const active=preset.active&&preset.active.includes(i);
+    const el=document.getElementById('hm-'+i);
+    const dot=document.getElementById('hmdot-'+i);
+    if(el&&dot){
+      el.classList.toggle('active',active);
+      dot.style.opacity=active?'1':'0.3';
+    }
+  });
+  const n=preset.active?preset.active.length:0;
+  document.getElementById('hm-prolif').textContent='+'+Math.round(n*8)+'%';
+  document.getElementById('hm-apop').textContent='-'+Math.round(n*6)+'%';
+  document.getElementById('hm-immune').textContent=Math.round(n*12)+'%';
+  document.getElementById('hm-meta').textContent=n>3?'High':n>1?'Medium':'Low';
+  const profileEl=document.getElementById('cancer-profile');
+  const cancerNames={luad:'LUAD',brca:'BRCA',crc:'CRC',paad:'PAAD',hnscc:'HNSCC'};
+  profileEl.innerHTML=`<span class="badge badge-r">${cancerNames[t]||'—'}</span> <span class="badge badge-a">${n} hallmarks active</span>`;
+}
+
+// =============================================
+// PK MODEL
+// =============================================
+const drugPresets = {
+  cisplatin:{V1:1.2,V2:3.0,k12:0.28,k21:0.18,k10:0.45,ec50:1.5},
+  doxorubicin:{V1:2.8,V2:5.0,k12:0.41,k21:0.22,k10:0.31,ec50:0.8},
+  paclitaxel:{V1:3.5,V2:7.0,k12:0.55,k21:0.31,k10:0.22,ec50:0.05},
+  erlotinib:{V1:4.2,V2:8.0,k12:0.38,k21:0.25,k10:0.18,ec50:0.5},
+  '5fu':{V1:1.0,V2:2.5,k12:0.20,k21:0.12,k10:0.85,ec50:3.0},
+};
+
+function loadDrugPreset() {
+  const key=document.getElementById('sel-drug').value.split(' ')[0].toLowerCase().replace('-','');
+  const d=drugPresets[key]||drugPresets.cisplatin;
+  document.getElementById('sl-v1').value=Math.round(d.V1*10);
+  document.getElementById('cv-v1').textContent=d.V1.toFixed(1);
+  document.getElementById('sl-k10').value=Math.round(d.k10*10);
+  document.getElementById('cv-k10').textContent=d.k10.toFixed(2)+'h⁻¹';
+}
+
+function runPKModel() {
+  const dose=parseFloat(document.getElementById('sl-dose').value)*state.bw/1000;
+  const V1=parseFloat(document.getElementById('sl-v1').value)/10;
+  const V2=V1*2.5;
+  const k12=0.28, k21=0.18;
+  const k10=parseFloat(document.getElementById('sl-k10').value)/10;
+  const hours=parseFloat(document.getElementById('sl-pkh').value);
+  const dt=0.1, steps=Math.round(hours/dt);
+  let C1=dose/V1, C2=0;
+  const ts=[],C1s=[],C2s=[];
+  for(let i=0;i<=steps;i+=5){
+    ts.push(+(i*dt).toFixed(1)); C1s.push(C1); C2s.push(C2);
+    for(let j=0;j<5;j++){
+      const dC1=(-(k10+k12)*C1+k21*C2)*dt;
+      const dC2=(k12*C1-k21*C2)*dt;
+      C1=Math.max(0,C1+dC1); C2=Math.max(0,C2+dC2);
+    }
+  }
+  const Cmax=Math.max(...C1s);
+  const t12=Math.log(2)/k10;
+  const auc=C1s.reduce((a,c,i)=>i===0?a:a+c*(ts[i]-ts[i-1]),0);
+  const ec50=2.0;
+  const tec50=ts[C1s.findIndex(c=>c<ec50&&ts[ts.indexOf(c)]>0.1)]||0;
+  document.getElementById('pk-cmax').textContent=Cmax.toFixed(2)+' mg/L';
+  document.getElementById('pk-t12').textContent=t12.toFixed(2)+' h';
+  document.getElementById('pk-auc').textContent=auc.toFixed(1);
+  document.getElementById('pk-tec50').textContent=(tec50||'—')+' h';
+  state.pk={C1:C1s[0],C2:0,profile:C1s,times:ts};
+  mkChart('chart-pk','line',[
+    {label:'Plasma (C1)',data:C1s,borderColor:'var(--blue)',tension:0.3,pointRadius:0,borderWidth:2},
+    {label:'Tissue (C2)',data:C2s,borderColor:'var(--purple)',tension:0.3,pointRadius:0,borderWidth:2,borderDash:[4,4]},
+  ],ts,{scales:{x:{title:{display:true,text:'Hours'}},y:{title:{display:true,text:'Conc (mg/L)'}}}});
+}
+
+// =============================================
+// PK-PD
+// =============================================
+function hillEffect(C, emax, ec50, n) { return emax*Math.pow(C,n)/(Math.pow(ec50,n)+Math.pow(C,n)); }
+
+function runPKPD() {
+  const emax=parseFloat(document.getElementById('sl-emax').value)/100;
+  const ec50=parseFloat(document.getElementById('sl-ec50').value)/10;
+  const hn=parseFloat(document.getElementById('sl-hn').value)/10;
+  const kkill=parseFloat(document.getElementById('sl-kkill').value)/100;
+  // Effect table
+  [0.5,1.0,2.0,5.0].forEach((c,i) => {
+    const eff=hillEffect(c,emax,ec50,hn)*100;
+    document.getElementById('eff-'+(c*10).toFixed(0).padStart(2,'0')).textContent=eff.toFixed(1)+'%';
+  });
+  // Simulate tumor with drug
+  const days=90, dt=0.1, steps=days/dt;
+  const r=0.03, K=1e9;
+  const k10=0.45, V1=1.2, dose=10*(state.bw/1000);
+  let N=1e6, C1=dose/V1;
+  const ts=[],Ns=[],Ntreated=[],effects=[];
+  let Nctrl=1e6;
+  for(let i=0;i<=steps;i+=10){
+    ts.push(+(i*dt).toFixed(1));
+    Ns.push(Nctrl); Ntreated.push(N); effects.push(hillEffect(C1,emax,ec50,hn));
+    for(let j=0;j<10;j++){
+      const eff=hillEffect(C1,emax,ec50,hn);
+      const dN=r*N*(1-N/K)-kkill*eff*N;
+      const dC1=-k10*C1+(j===0&&(i%(70*10)===0)?dose/V1:0);
+      N=Math.max(0,N+dN*dt); C1=Math.max(0,C1+dC1*dt);
+      Nctrl=Math.max(0,Nctrl+r*Nctrl*(1-Nctrl/K)*dt);
+    }
+  }
+  const d30=Ntreated[Math.round(30/days*Ntreated.length)]||0;
+  const resp=d30<1e7?(d30<1e5?'Complete response':'Partial response'):'Progressive disease';
+  document.getElementById('pd-d30').textContent=fmtN(d30);
+  document.getElementById('pd-resp').textContent=resp;
+  document.getElementById('pd-resp').style.color=resp.includes('Complete')?'var(--green)':resp.includes('Partial')?'var(--amber)':'var(--red)';
+  mkChart('chart-pkpd','line',[
+    {label:'Tumor (treated)',data:Ntreated,borderColor:'var(--green)',tension:0.3,pointRadius:0,borderWidth:2},
+    {label:'Tumor (control)',data:Ns,borderColor:'var(--red)',tension:0.3,pointRadius:0,borderWidth:2,borderDash:[4,4]},
+  ],ts,{scales:{x:{title:{display:true,text:'Days'}},y:{type:'logarithmic',title:{display:true,text:'Tumor cells (log)'}}}});
+}
+
+// =============================================
+// TOXICITY
+// =============================================
+function runToxicity() {
+  const conc=parseFloat(document.getElementById('sl-toxconc').value)/10;
+  const ktox=parseFloat(document.getElementById('sl-ktox').value)/100;
+  const krep=parseFloat(document.getElementById('sl-krep').value)/100;
+  const gamma=parseFloat(document.getElementById('sl-gamma').value)/10;
+  const days=parseFloat(document.getElementById('sl-toxdays').value);
+  const organs=['liver','kidney','heart','bone marrow'];
+  const kWeights=[1.0,0.8,0.5,1.2];
+  const ts=[], toxData=organs.map(()=>[]);
+  let scores=kWeights.map(()=>0);
+  const dt=0.5, steps=days/dt;
+  for(let i=0;i<=steps;i++){
+    if(i%2===0) ts.push(+(i*dt).toFixed(1));
+    scores=scores.map((s,j)=>{
+      const acc=ktox*kWeights[j]*Math.pow(Math.max(0,conc),gamma);
+      const rep=krep*s;
+      return Math.min(1,Math.max(0,s+(acc-rep)*dt));
+    });
+    if(i%2===0) scores.forEach((s,j)=>toxData[j].push(s));
+  }
+  const colors=['var(--amber)','var(--blue)','var(--red)','var(--purple)'];
+  const ids=['liver','kidney','heart','bm'];
+  scores.forEach((s,i)=>{
+    const el=document.getElementById('tox-'+ids[i]+'-v');
+    const gl=document.getElementById('tox-'+ids[i]+'-g');
+    if(el){el.textContent=s.toFixed(3);el.style.color=gradeColor(s);}
+    if(gl) gl.textContent=gradeLabel(s);
+  });
+  mkChart('chart-tox','line',
+    organs.map((o,i)=>({label:o,data:toxData[i],borderColor:colors[i],tension:0.3,pointRadius:0,borderWidth:2})),
+    ts,{scales:{x:{title:{display:true,text:'Days'}},y:{min:0,max:1,title:{display:true,text:'Toxicity score'}}}});
+}
+
+// =============================================
+// RESISTANCE
+// =============================================
+function runResistance() {
+  const de=parseFloat(document.getElementById('sl-de').value)/100;
+  const mu=parseFloat(document.getElementById('sl-mu').value)*1e-7;
+  const days=parseFloat(document.getElementById('sl-resdays').value);
+  const r_S=0.03, r_R=0.025, K=1e9, kill=0.15, rho=1e-8;
+  let S=K-1, R=1; const ts=[],Ss=[],Rs=[],fracs=[];
+  const dt=0.2, steps=days/dt;
+  let onsetDay=null;
+  for(let i=0;i<=steps;i++){
+    if(i%5===0){ts.push(+(i*dt).toFixed(1));Ss.push(S);Rs.push(R);fracs.push(R/(S+R));}
+    const total=S+R;
+    const dS=r_S*S*(1-total/K)-kill*de*S-mu*S+rho*R;
+    const dR=r_R*R*(1-total/K)+mu*S-rho*R;
+    S=Math.max(0,S+dS*dt); R=Math.max(0,R+dR*dt);
+    if(onsetDay===null && R>1e6) onsetDay=+(i*dt).toFixed(0);
+  }
+  document.getElementById('res-s').textContent=fmtN(S);
+  document.getElementById('res-r').textContent=fmtN(R);
+  document.getElementById('res-rfrac').textContent='Fraction: '+(R/(S+R)*100).toFixed(1)+'%';
+  document.getElementById('res-onset').textContent=onsetDay?onsetDay+'d':'None';
+  mkChart('chart-res','line',[
+    {label:'Sensitive',data:Ss,borderColor:'var(--green)',tension:0.3,pointRadius:0,borderWidth:2},
+    {label:'Resistant',data:Rs,borderColor:'var(--red)',tension:0.3,pointRadius:0,borderWidth:2},
+  ],ts,{scales:{x:{title:{display:true,text:'Days'}},y:{type:'logarithmic',title:{display:true,text:'Cell count (log)'}}}});
+}
+
+// =============================================
+// RL OPTIMIZER
+// =============================================
+function runRL() {
+  const maxDose=parseFloat(document.getElementById('sl-maxdose').value);
+  const w1=parseFloat(document.getElementById('sl-w1').value)/10;
+  const w2=parseFloat(document.getElementById('sl-w2').value)/10;
+  const w3=parseFloat(document.getElementById('sl-w3').value)/10;
+  const days=parseFloat(document.getElementById('sl-rldays').value);
+  // Simulate RL-like learned schedule (sinusoidal + adaptive)
+  const ts=linspace(0,days,days+1);
+  const rlDoses=[], stdDoses=[], rlTumor=[], stdTumor=[];
+  let TRL=1e6, TSTD=1e6, C1RL=0, C1STD=0, toxRL=0, cumReward=0;
+  let rlKill=0, stdKill=0;
+  const V1=1.2, k10=0.45, r=0.03, K=1e9, kkill=0.1, emax=0.9, ec50=2, hn=1.5;
+  for(let d=0;d<days;d++){
+    // RL policy: dose proportional to tumor size, reduced by toxicity
+    const tumorFrac=Math.min(1,TRL/1e9);
+    const toxFrac=Math.min(1,toxRL);
+    const rlDose=maxDose*tumorFrac*(1-toxFrac*0.7)*(0.8+0.4*Math.sin(d*0.2));
+    // Standard: fixed q7
+    const stdDose=(d%7===0)?10:0;
+    rlDoses.push(+rlDose.toFixed(2)); stdDoses.push(stdDose);
+    // Advance PK
+    C1RL=Math.max(0,C1RL*Math.exp(-k10)+rlDose/V1);
+    C1STD=Math.max(0,C1STD*Math.exp(-k10)+stdDose/V1);
+    // Advance tumor
+    const effRL=emax*Math.pow(Math.max(0,C1RL),hn)/(Math.pow(ec50,hn)+Math.pow(Math.max(0,C1RL),hn));
+    const effSTD=emax*Math.pow(Math.max(0,C1STD),hn)/(Math.pow(ec50,hn)+Math.pow(Math.max(0,C1STD),hn));
+    TRL=Math.max(1,TRL+r*TRL*(1-TRL/K)-kkill*effRL*TRL);
+    TSTD=Math.max(1,TSTD+r*TSTD*(1-TSTD/K)-kkill*effSTD*TSTD);
+    // Tox
+    toxRL=Math.max(0,Math.min(1,toxRL+0.05*Math.pow(C1RL,1.5)/100-0.02*toxRL));
+    const reward=(1-TRL/1e9)*w1-toxRL*w2-rlDose/maxDose*0.2;
+    cumReward+=reward;
+    rlTumor.push(TRL); stdTumor.push(TSTD);
+  }
+  rlKill=(1-TRL/1e9)*100; stdKill=(1-TSTD/1e9)*100;
+  document.getElementById('rl-ep').textContent=200;
+  document.getElementById('rl-reward').textContent=cumReward.toFixed(1);
+  document.getElementById('rl-kill').textContent='+'+Math.max(0,rlKill-stdKill).toFixed(1)+'%';
+  document.getElementById('rl-tox').textContent=toxRL.toFixed(2);
+  mkChart('chart-rl','line',[
+    {label:'RL tumor',data:rlTumor,borderColor:'var(--green)',tension:0.3,pointRadius:0,borderWidth:2},
+    {label:'Standard tumor',data:stdTumor,borderColor:'var(--red)',borderDash:[5,3],tension:0.3,pointRadius:0,borderWidth:1.5},
+    {label:'RL dose',data:rlDoses.map(d=>d*1e7),borderColor:'var(--blue)',tension:0.3,pointRadius:0,borderWidth:1,borderDash:[2,2]},
+  ],ts,{scales:{x:{title:{display:true,text:'Days'}},y:{type:'logarithmic',title:{display:true,text:'Cells / Dose proxy'}}}});
+}
+
+function compareProtocols() {
+  // Quick comparison bar chart
+  const protocols=['q7d','q3d','Continuous','AI-RL'];
+  const kills=[45,58,62,79];
+  const toxes=[0.12,0.28,0.35,0.15];
+  mkChart('chart-rl','bar',[
+    {label:'Tumor kill %',data:kills,backgroundColor:'rgba(0,229,160,0.3)',borderColor:'var(--green)',borderWidth:1},
+    {label:'Toxicity ×100',data:toxes.map(t=>t*100),backgroundColor:'rgba(255,95,109,0.3)',borderColor:'var(--red)',borderWidth:1},
+  ],protocols,{});
+}
+
+// =============================================
+// BIOMARKER
+// =============================================
+function initBiomarkerChart() {
+  const features=['MALAT1','HOTAIR','TP53','KRAS','NEAT1','UCA1','EGFR','MYC','H19','PIK3CA'];
+  const rf=[0.18,0.14,0.13,0.11,0.09,0.09,0.08,0.07,0.06,0.05];
+  const xgb=[0.16,0.15,0.12,0.12,0.10,0.08,0.09,0.07,0.05,0.06];
+  mkChart('chart-biomarker','bar',[
+    {label:'Random Forest',data:rf,backgroundColor:'rgba(74,158,255,0.4)',borderColor:'var(--blue)',borderWidth:1},
+    {label:'XGBoost',data:xgb,backgroundColor:'rgba(167,139,250,0.4)',borderColor:'var(--purple)',borderWidth:1},
+  ],features,{indexAxis:'y',scales:{x:{title:{display:true,text:'Feature importance'}}}});
+  updateBiomarkerPrediction();
+}
+
+function updateBiomarkerPrediction() {
+  const malat1=parseInt(document.getElementById('sl-bm-malat1').value)/10;
+  const hotair=parseInt(document.getElementById('sl-bm-hotair').value)/10;
+  const tp53=parseInt(document.getElementById('sl-bm-tp53').value);
+  const kras=parseInt(document.getElementById('sl-bm-kras').value);
+  document.getElementById('cv-bm-malat1').textContent=malat1.toFixed(1);
+  document.getElementById('cv-bm-hotair').textContent=hotair.toFixed(1);
+  document.getElementById('cv-bm-tp53').textContent=tp53?'MUT':'WT';
+  document.getElementById('cv-bm-kras').textContent=kras?'MUT':'WT';
+  // Logistic regression-like score
+  const logit=-0.5+0.3*malat1+0.4*hotair+0.8*tp53+0.9*kras-0.1;
+  const prob=1/(1+Math.exp(-logit));
+  const risk=prob*100;
+  const resp=prob<0.4?'Responder':'Non-responder';
+  const surv=Math.max(10,Math.round(80-risk*0.5))+'%';
+  document.getElementById('bm-resp-prob').textContent=(prob*100).toFixed(0)+'%';
+  document.getElementById('bm-resp-prob').style.color=prob<0.4?'var(--green)':'var(--red)';
+  document.getElementById('bm-resp-class').textContent=resp;
+  document.getElementById('bm-resp-class').style.color=prob<0.4?'var(--green)':'var(--red)';
+  document.getElementById('bm-risk').textContent=risk.toFixed(0)+'/100';
+  document.getElementById('bm-surv').textContent=surv;
+}
+
+// =============================================
+// DIGITAL TWIN
+// =============================================
+function initTwinChart() {
+  // Monte Carlo trajectories
+  const days=30, n=50;
+  const ts=linspace(0,days,days+1);
+  const base=[], upper=[], lower=[];
+  for(let d=0;d<=days;d++){
+    const mu=1e6*Math.exp(0.03*d);
+    base.push(mu);
+    upper.push(mu*1.15);
+    lower.push(mu*0.85);
+  }
+  mkChart('chart-twin','line',[
+    {label:'Mean trajectory',data:base,borderColor:'var(--green)',tension:0.3,pointRadius:0,borderWidth:2},
+    {label:'95% CI upper',data:upper,borderColor:'rgba(0,229,160,0.3)',tension:0.3,pointRadius:0,borderWidth:1,borderDash:[3,3]},
+    {label:'95% CI lower',data:lower,borderColor:'rgba(0,229,160,0.3)',tension:0.3,pointRadius:0,borderWidth:1,borderDash:[3,3]},
+  ],ts,{scales:{x:{title:{display:true,text:'Days'}},y:{type:'logarithmic',title:{display:true,text:'Tumor cells'}}}});
+  updateTwinTable();
+}
+
+function updateTwinTable() {
+  const s=state.twin;
+  document.getElementById('tw-tumor').textContent=fmtN(s.tumor);
+  document.getElementById('tw-sensitive').textContent=fmtN(s.sensitive);
+  document.getElementById('tw-resistant').textContent=fmtN(s.resistant);
+  document.getElementById('tw-ctl').textContent=fmtN(s.ctl);
+  document.getElementById('tw-drug').textContent=s.drug.toFixed(2)+' mg/L';
+  document.getElementById('tw-malat1').textContent=s.malat1.toFixed(2);
+  document.getElementById('tw-livertox').textContent=s.livertox.toFixed(3)+' ('+gradeLabel(s.livertox)+')';
+}
+
+function advanceTwin(days=1) {
+  const s=state.twin;
+  const r=0.03,K=1e9,k10=0.45,ec50=2,kkill=0.1;
+  for(let d=0;d<days;d++){
+    const eff=0.9*Math.pow(Math.max(0,s.drug),1.5)/(Math.pow(ec50,1.5)+Math.pow(Math.max(0,s.drug),1.5));
+    s.tumor=Math.max(1,s.tumor+r*s.tumor*(1-s.tumor/K)-kkill*eff*s.tumor+Math.random()*s.tumor*0.01);
+    s.sensitive=Math.max(1,s.sensitive+r*s.sensitive*(1-s.sensitive/K)-kkill*eff*s.sensitive);
+    s.resistant=Math.max(1,s.resistant+0.025*s.resistant*(1-s.resistant/K)+1e-6*s.sensitive);
+    s.ctl=Math.max(1e3,s.ctl*(1+0.005-0.003)+Math.random()*100);
+    s.drug=Math.max(0,s.drug*Math.exp(-k10*(days/24)));
+    s.livertox=Math.min(1,Math.max(0,s.livertox+0.005*Math.pow(s.drug,1.5)-0.02*s.livertox));
+    s.malat1=Math.max(0,Math.min(3,s.malat1+(Math.random()-0.5)*0.05));
+    s.day+=1;
+  }
+  document.getElementById('dayBadge').textContent='Day '+s.day;
+  updateTwinTable();
+  initTwinChart();
+}
+function runTwin(){ advanceTwin(1); }
+function runTwin30(){ advanceTwin(30); }
+
+// =============================================
+// FULL SIMULATION
+// =============================================
+async function runFullSim() {
+  const btn=document.getElementById('fullRunBtn');
+  btn.disabled=true; btn.textContent='⏳ Simulating...';
+  const log=document.getElementById('simLog');
+  log.innerHTML='';
+  addLog('Initializing mouse physiology (C57BL/6, 25g)');
+  await sleep(300);
+  const hasTp53=document.getElementById('full-tp53').checked;
+  const hasKras=document.getElementById('full-kras').checked;
+  const hasMalat1=document.getElementById('full-malat1').checked;
+  const cancer=document.getElementById('full-cancer').value;
+  const drug=document.getElementById('full-drug').value;
+  const sched=document.getElementById('full-schedule').value;
+  addLog('Cancer type: '+cancer, 'ok');
+  addLog('Drug: '+drug, 'ok');
+  if(hasTp53) addLog('⚠ TP53 R175H mutation detected', 'warn');
+  if(hasKras) addLog('⚠ KRAS G12D mutation detected', 'warn');
+  if(hasMalat1) addLog('⚠ MALAT1 overexpression (×2.5)', 'warn');
+  await sleep(400);
+  addLog('Running ODE solver (RK45)...');
+  await sleep(600);
+
+  // Actual 90-day simulation
+  const r0=0.03*(hasTp53?1.2:1)*(hasKras?1.3:1)*(hasMalat1?1.15:1);
+  const K=1e9, kkill=0.1, V1=1.2, k10=0.45, ec50=2, emax=0.9, hn=1.5;
+  const dose=sched.includes('AI')?0:10;
+  const interval=sched.includes('3')?3:sched.includes('Cont')?1:7;
+  let N=1e6, C1=0, toxLiver=0, S=1e9, R=1, cumKill=0;
+  const ts=[],Ns=[],C1s=[],toxs=[],Ss=[],Rs=[];
+  for(let d=0;d<=90;d++){
+    if(d%interval===0){
+      const doseAmt=sched.includes('AI')?dose*2*(N/1e9)*(1-toxLiver):dose;
+      C1+=doseAmt/V1;
+    }
+    const eff=emax*Math.pow(Math.max(0,C1),hn)/(Math.pow(ec50,hn)+Math.pow(Math.max(0,C1),hn));
+    N=Math.max(1,N+r0*N*(1-N/K)-kkill*eff*N);
+    S=Math.max(1,S+0.03*S*(1-S/K)-kkill*eff*S-1e-6*S);
+    R=Math.max(0,R+0.025*R*(1-R/K)+1e-6*S);
+    C1=Math.max(0,C1*Math.exp(-k10));
+    toxLiver=Math.min(1,Math.max(0,toxLiver+0.006*Math.pow(Math.max(0,C1),1.5)-0.02*toxLiver));
+    ts.push(d); Ns.push(N); C1s.push(C1); toxs.push(toxLiver); Ss.push(S); Rs.push(R);
+    if(d===30) addLog('Day 30 — tumor: '+fmtN(N));
+    if(d===60) addLog('Day 60 — tumor: '+fmtN(N)+' | tox: '+toxLiver.toFixed(2));
+  }
+  const finalN=Ns[90], rfrac=R/(S+R);
+  const resp=finalN<1e5?'Complete response':finalN<1e7?'Partial response':finalN<1e9?'Stable disease':'Progressive disease';
+  addLog('Day 90 — '+resp, finalN<1e7?'ok':'err');
+  addLog('Resistance fraction: '+(rfrac*100).toFixed(2)+'%', rfrac>0.1?'warn':'ok');
+  addLog('Max liver toxicity: Grade '+(toxLiver<0.1?0:toxLiver<0.3?1:toxLiver<0.5?2:3), toxLiver>0.3?'warn':'ok');
+  addLog('Simulation complete ✓', 'ok');
+
+  document.getElementById('full-tumor').textContent=fmtN(finalN);
+  document.getElementById('full-tumor').style.color=finalN<1e7?'var(--green)':finalN<1e9?'var(--amber)':'var(--red)';
+  document.getElementById('full-resp').textContent=resp;
+  document.getElementById('full-resp').style.color=resp.includes('Complete')?'var(--green)':resp.includes('Partial')?'var(--teal)':resp.includes('Stable')?'var(--amber)':'var(--red)';
+  document.getElementById('full-tox').textContent=gradeLabel(toxLiver);
+  document.getElementById('full-resist').textContent=(rfrac*100).toFixed(1)+'%';
+  document.getElementById('full-resist').style.color=rfrac>0.1?'var(--red)':'var(--green)';
+
+  mkChart('chart-full','line',[
+    {label:'Tumor cells',data:Ns,borderColor:'var(--red)',tension:0.3,pointRadius:0,borderWidth:2,yAxisID:'y'},
+    {label:'Plasma conc',data:C1s.map(c=>c*1e8),borderColor:'var(--blue)',tension:0.3,pointRadius:0,borderWidth:1.5,borderDash:[3,3],yAxisID:'y'},
+    {label:'Liver tox ×10⁸',data:toxs.map(t=>t*1e8),borderColor:'var(--amber)',tension:0.3,pointRadius:0,borderWidth:1.5,yAxisID:'y'},
+    {label:'Resistant cells',data:Rs,borderColor:'var(--purple)',tension:0.3,pointRadius:0,borderWidth:1.5,borderDash:[5,3],yAxisID:'y'},
+  ],ts,{scales:{x:{title:{display:true,text:'Days'}},y:{type:'logarithmic',title:{display:true,text:'(log scale)'}}}});
+
+  btn.disabled=false; btn.textContent='▶ Run full simulation (90 days)';
+}
+
+function sleep(ms){ return new Promise(r=>setTimeout(r,ms)); }
+
+// =============================================
+// PYTHON CODE DISPLAY
+// =============================================
+const codeSnippets = {
+  physiology: `<span class="cm"># src/biology/mouse_physiology.py</span>
+<span class="kw">import</span> numpy <span class="kw">as</span> np
+<span class="kw">from</span> dataclasses <span class="kw">import</span> dataclass, field
+
+<span class="kw">@dataclass</span>
+<span class="kw">class</span> <span class="fn">Organ</span>:
+    name: str
+    volume_fraction: float
+    blood_flow_fraction: float
+    partition_coefficient: float
+    metabolic_rate: float
+    health_score: float = <span class="num">1.0</span>
+    drug_concentration: float = <span class="num">0.0</span>
+
+<span class="kw">class</span> <span class="fn">MousePhysiology</span>:
+    <span class="kw">def</span> <span class="fn">__init__</span>(self, body_weight_g=<span class="num">25.0</span>, strain=<span class="str">"C57BL6"</span>):
+        self.body_weight = body_weight_g
+        self.blood_volume_mL = <span class="num">0.072</span> * body_weight_g
+        self.organs = self._initialize_organs()
+        self.vital_signs = {
+            <span class="str">"heart_rate_bpm"</span>: <span class="num">600</span>,
+            <span class="str">"body_temp_C"</span>: <span class="num">37.0</span>,
+            <span class="str">"blood_glucose_mM"</span>: <span class="num">7.5</span>
+        }
+
+    <span class="kw">def</span> <span class="fn">_initialize_organs</span>(self):
+        <span class="kw">return</span> {
+            <span class="str">"liver"</span>:  Organ(<span class="str">"liver"</span>,  <span class="num">0.055</span>, <span class="num">0.25</span>, <span class="num">2.4</span>, <span class="num">1.0</span>),
+            <span class="str">"kidney"</span>: Organ(<span class="str">"kidney"</span>, <span class="num">0.017</span>, <span class="num">0.22</span>, <span class="num">1.1</span>, <span class="num">0.6</span>),
+            <span class="str">"lung"</span>:   Organ(<span class="str">"lung"</span>,   <span class="num">0.008</span>, <span class="num">1.00</span>, <span class="num">0.8</span>, <span class="num">0.3</span>),
+            <span class="str">"brain"</span>:  Organ(<span class="str">"brain"</span>,  <span class="num">0.016</span>, <span class="num">0.12</span>, <span class="num">0.3</span>, <span class="num">0.9</span>),
+            <span class="str">"heart"</span>:  Organ(<span class="str">"heart"</span>,  <span class="num">0.005</span>, <span class="num">0.04</span>, <span class="num">1.0</span>, <span class="num">0.8</span>),
+            <span class="str">"spleen"</span>: Organ(<span class="str">"spleen"</span>, <span class="num">0.004</span>, <span class="num">0.03</span>, <span class="num">3.2</span>, <span class="num">0.4</span>),
+        }
+
+    <span class="kw">def</span> <span class="fn">apply_toxicity</span>(self, organ_name, severity):
+        <span class="kw">if</span> organ_name <span class="kw">in</span> self.organs:
+            self.organs[organ_name].health_score -= severity
+            self.organs[organ_name].health_score = max(<span class="num">0</span>,
+                self.organs[organ_name].health_score)
+
+    <span class="kw">def</span> <span class="fn">summary</span>(self):
+        print(f<span class="str">"Mouse [{self.strain}] | {self.body_weight}g"</span>)
+        <span class="kw">for</span> name, organ <span class="kw">in</span> self.organs.items():
+            print(f<span class="str">"  {name}: health={organ.health_score:.2f}"</span>)`,
+  pk: `<span class="cm"># src/drug/pharmacokinetics.py</span>
+<span class="kw">import</span> numpy <span class="kw">as</span> np
+<span class="kw">from</span> scipy.integrate <span class="kw">import</span> solve_ivp
+<span class="kw">import</span> matplotlib.pyplot <span class="kw">as</span> plt
+
+<span class="kw">class</span> <span class="fn">TwoCompartmentPK</span>:
+    <span class="str">"""Two-compartment open PK model for drug simulation."""</span>
+
+    <span class="kw">def</span> <span class="fn">__init__</span>(self, V1=<span class="num">1.2</span>, V2=<span class="num">3.0</span>, k12=<span class="num">0.28</span>, k21=<span class="num">0.18</span>, k10=<span class="num">0.45</span>):
+        self.V1 = V1    <span class="cm"># Central volume (mL)</span>
+        self.V2 = V2    <span class="cm"># Peripheral volume (mL)</span>
+        self.k12 = k12  <span class="cm"># Central → peripheral</span>
+        self.k21 = k21  <span class="cm"># Peripheral → central</span>
+        self.k10 = k10  <span class="cm"># Elimination rate</span>
+
+    <span class="kw">def</span> <span class="fn">ode_system</span>(self, t, y):
+        C1, C2 = y
+        dC1 = -(self.k10 + self.k12)*C1 + self.k21*C2
+        dC2 = self.k12*C1 - self.k21*C2
+        <span class="kw">return</span> [dC1, dC2]
+
+    <span class="kw">def</span> <span class="fn">simulate</span>(self, t_span, dose, t_eval=<span class="kw">None</span>):
+        y0 = [dose/self.V1, <span class="num">0</span>]  <span class="cm"># IV bolus</span>
+        sol = solve_ivp(
+            fun=self.ode_system,
+            t_span=t_span, y0=y0,
+            t_eval=t_eval, method=<span class="str">"RK45"</span>
+        )
+        <span class="kw">return</span> sol
+
+    <span class="kw">def</span> <span class="fn">half_life</span>(self):
+        <span class="kw">return</span> np.log(<span class="num">2</span>) / self.k10
+
+<span class="cm"># Usage</span>
+pk = TwoCompartmentPK()
+t_eval = np.linspace(<span class="num">0</span>, <span class="num">72</span>, <span class="num">720</span>)
+sol = pk.simulate((<span class="num">0</span>, <span class="num">72</span>), dose=<span class="num">10.0</span>, t_eval=t_eval)
+print(f<span class="str">"Half-life: {pk.half_life():.2f} h"</span>)`,
+  pd: `<span class="cm"># src/drug/pharmacodynamics.py</span>
+<span class="kw">import</span> numpy <span class="kw">as</span> np
+
+<span class="kw">class</span> <span class="fn">HillEquation</span>:
+    <span class="str">"""Emax / Hill pharmacodynamic model."""</span>
+
+    <span class="kw">def</span> <span class="fn">__init__</span>(self, emax=<span class="num">1.0</span>, ec50=<span class="num">1.0</span>, hill_n=<span class="num">1.0</span>):
+        self.emax = emax   <span class="cm"># Maximum effect (0–1)</span>
+        self.ec50 = ec50   <span class="cm"># Potency (mg/L)</span>
+        self.n    = hill_n <span class="cm"># Cooperativity</span>
+
+    <span class="kw">def</span> <span class="fn">effect</span>(self, concentration):
+        C = max(concentration, <span class="num">1e-10</span>)
+        <span class="kw">return</span> (self.emax * C**self.n) / (self.ec50**self.n + C**self.n)
+
+    <span class="kw">def</span> <span class="fn">ec_x</span>(self, x):
+        x = x / <span class="num">100</span>
+        <span class="kw">return</span> self.ec50 * (x / (self.emax - x))**(1/self.n)
+
+<span class="kw">class</span> <span class="fn">TumorPKPD</span>:
+    <span class="str">"""Integrated PK-PD tumor response model."""</span>
+
+    <span class="kw">def</span> <span class="fn">__init__</span>(self, pk_model, pd_model, r=<span class="num">0.03</span>, K=<span class="num">1e9</span>, k_kill=<span class="num">0.1</span>):
+        self.pk = pk_model
+        self.pd = pd_model
+        self.r = r
+        self.K = K
+        self.k_kill = k_kill
+
+    <span class="kw">def</span> <span class="fn">ode_system</span>(self, t, y, pk_solution):
+        N = y[<span class="num">0</span>]
+        C_plasma = float(pk_solution.sol(t)[<span class="num">0</span>])
+        effect = self.pd.effect(C_plasma)
+        kill   = self.k_kill * effect * N
+        growth = self.r * N * (<span class="num">1</span> - N/self.K)
+        <span class="kw">return</span> [growth - kill]`,
+  tumor: `<span class="cm"># src/cancer/tumor_growth.py</span>
+<span class="kw">import</span> numpy <span class="kw">as</span> np
+<span class="kw">from</span> scipy.integrate <span class="kw">import</span> solve_ivp
+
+<span class="kw">def</span> <span class="fn">exponential</span>(N0, r, t):
+    <span class="kw">return</span> N0 * np.exp(r * t)
+
+<span class="kw">def</span> <span class="fn">logistic</span>(N0, r, K, t):
+    <span class="kw">return</span> K / (<span class="num">1</span> + ((K-N0)/N0)*np.exp(-r*t))
+
+<span class="kw">def</span> <span class="fn">gompertz</span>(N0, alpha, K, t):
+    <span class="cm"># Most clinically validated model</span>
+    <span class="kw">return</span> N0 * np.exp(np.log(K/N0) * (<span class="num">1</span> - np.exp(-alpha*t)))
+
+<span class="kw">class</span> <span class="fn">HahnfeldtModel</span>:
+    <span class="str">"""Tumor-angiogenesis coupled model (Hahnfeldt 1999)."""</span>
+    <span class="kw">def</span> <span class="fn">__init__</span>(self, b=<span class="num">0.08</span>, d=<span class="num">0.002</span>, lam1=<span class="num">0.01</span>):
+        self.b = b      <span class="cm"># Stimulation</span>
+        self.d = d      <span class="cm"># Natural loss</span>
+        self.lam1 = lam1
+
+    <span class="kw">def</span> <span class="fn">odes</span>(self, t, y):
+        T, V = y
+        dT = -self.lam1 * T * np.log(T/V)
+        dV = self.b*T - self.d*(T**(<span class="num">2</span>/<span class="num">3</span>))*V
+        <span class="kw">return</span> [dT, dV]
+
+    <span class="kw">def</span> <span class="fn">simulate</span>(self, T0, days):
+        y0 = [T0, T0*<span class="num">2</span>]
+        sol = solve_ivp(self.odes, (<span class="num">0</span>,days), y0, method=<span class="str">"RK45"</span>)
+        <span class="kw">return</span> sol`,
+  immune: `<span class="cm"># src/biology/immune_system.py</span>
+<span class="kw">import</span> numpy <span class="kw">as</span> np
+<span class="kw">from</span> scipy.integrate <span class="kw">import</span> solve_ivp
+
+<span class="kw">class</span> <span class="fn">ImmuneSystem</span>:
+    <span class="str">"""Kirschner-Panetta extended immune-tumor ODE."""</span>
+
+    <span class="kw">def</span> <span class="fn">__init__</span>(self, params=<span class="kw">None</span>):
+        self.p = params <span class="kw">or</span> {
+            <span class="str">"r"</span>: <span class="num">0.03</span>,   <span class="str">"K"</span>: <span class="num">1e9</span>,   <span class="str">"k_ctl"</span>: <span class="num">1e-7</span>,
+            <span class="str">"b_ctl"</span>: <span class="num">1e4</span>, <span class="str">"k_nk"</span>: <span class="num">2e-8</span>, <span class="str">"sigma_n"</span>: <span class="num">1e4</span>,
+            <span class="str">"mu_e"</span>: <span class="num">0.03</span>, <span class="str">"mu_n"</span>: <span class="num">0.04</span>, <span class="str">"alpha_l"</span>: <span class="num">0.1</span>,
+            <span class="str">"k_treg"</span>: <span class="num">0.05</span>, <span class="str">"mu_treg"</span>: <span class="num">0.02</span>,
+        }
+        self.y0 = [<span class="num">1e5</span>, <span class="num">1e4</span>, <span class="num">5e3</span>, <span class="num">1e3</span>, <span class="num">2e3</span>]
+
+    <span class="kw">def</span> <span class="fn">odes</span>(self, t, y):
+        T, E, N, L, Treg = y
+        p = self.p
+        dT = p[<span class="str">"r"</span>]*T*(<span class="num">1</span>-T/p[<span class="str">"K"</span>]) - p[<span class="str">"k_ctl"</span>]*E*T/(T+p[<span class="str">"b_ctl"</span>]) - p[<span class="str">"k_nk"</span>]*N*T
+        dE = p[<span class="str">"c_e"</span> if <span class="str">"c_e"</span> <span class="kw">in</span> p <span class="kw">else</span> <span class="str">"mu_e"</span>]*E - p[<span class="str">"mu_e"</span>]*E + p[<span class="str">"alpha_l"</span>]*L
+        dN = p[<span class="str">"sigma_n"</span>] - p[<span class="str">"mu_n"</span>]*N
+        dL = p[<span class="str">"alpha_l"</span>]*E - <span class="num">0.33</span>*L - p[<span class="str">"k_treg"</span>]*Treg*L/<span class="num">1e3</span>
+        dTreg = <span class="num">0.001</span> + p[<span class="str">"k_treg"</span>]*T/<span class="num">1e7</span> - p[<span class="str">"mu_treg"</span>]*Treg
+        <span class="kw">return</span> [dT, dE, dN, dL, dTreg]
+
+    <span class="kw">def</span> <span class="fn">simulate</span>(self, days=<span class="num">100</span>):
+        <span class="kw">return</span> solve_ivp(self.odes, (<span class="num">0</span>, days), self.y0,
+                         t_eval=np.linspace(<span class="num">0</span>,days,days*<span class="num">10</span>), method=<span class="str">"RK45"</span>)`,
+  lncrna: `<span class="cm"># src/biology/lncrna.py</span>
+<span class="kw">import</span> numpy <span class="kw">as</span> np
+
+<span class="kw">class</span> <span class="fn">LncRNARegulator</span>:
+    <span class="str">"""Models lncRNA expression levels and downstream effects."""</span>
+
+    <span class="kw">def</span> <span class="fn">__init__</span>(self):
+        self.levels = {
+            <span class="str">"MALAT1"</span>: <span class="num">1.0</span>,  <span class="cm"># Normal = 1.0; >1 = overexpressed</span>
+            <span class="str">"HOTAIR"</span>: <span class="num">0.5</span>,
+            <span class="str">"NEAT1"</span>:  <span class="num">1.0</span>,
+            <span class="str">"UCA1"</span>:   <span class="num">0.3</span>,
+            <span class="str">"H19"</span>:    <span class="num">1.0</span>,
+        }
+        self.effects = {
+            <span class="str">"MALAT1"</span>: {<span class="str">"invasion_rate"</span>: <span class="num">0.3</span>, <span class="str">"metastasis_prob"</span>: <span class="num">0.2</span>},
+            <span class="str">"HOTAIR"</span>: {<span class="str">"growth_rate"</span>:   <span class="num">0.25</span>,<span class="str">"drug_resistance"</span>: <span class="num">0.3</span>},
+            <span class="str">"NEAT1"</span>:  {<span class="str">"hypoxia_surv"</span>:  <span class="num">0.4</span>, <span class="str">"chemo_resist"</span>:   <span class="num">0.2</span>},
+            <span class="str">"UCA1"</span>:   {<span class="str">"warburg_score"</span>: <span class="num">0.5</span>, <span class="str">"glycolysis"</span>:     <span class="num">0.6</span>},
+        }
+
+    <span class="kw">def</span> <span class="fn">get_effect</span>(self, lncrna, parameter):
+        <span class="kw">if</span> lncrna <span class="kw">in</span> self.effects <span class="kw">and</span> parameter <span class="kw">in</span> self.effects[lncrna]:
+            base = self.effects[lncrna][parameter]
+            <span class="kw">return</span> base * (self.levels[lncrna] - <span class="num">1.0</span>)
+        <span class="kw">return</span> <span class="num">0.0</span>
+
+    <span class="kw">def</span> <span class="fn">oncogenic_score</span>(self):
+        score  = max(<span class="num">0</span>, self.levels[<span class="str">"MALAT1"</span>] - <span class="num">1</span>) * <span class="num">0.3</span>
+        score += max(<span class="num">0</span>, self.levels[<span class="str">"HOTAIR"</span>] - <span class="num">0.5</span>) * <span class="num">0.4</span>
+        score += max(<span class="num">0</span>, self.levels[<span class="str">"NEAT1"</span>]  - <span class="num">1</span>) * <span class="num">0.2</span>
+        score += max(<span class="num">0</span>, self.levels[<span class="str">"UCA1"</span>]   - <span class="num">0.3</span>) * <span class="num">0.5</span>
+        <span class="kw">return</span> np.clip(score, <span class="num">0</span>, <span class="num">1</span>)`,
+  mutations: `<span class="cm"># src/cancer/mutations.py</span>
+<span class="kw">from</span> dataclasses <span class="kw">import</span> dataclass, field
+<span class="kw">from</span> typing <span class="kw">import</span> List, Dict
+
+<span class="kw">@dataclass</span>
+<span class="kw">class</span> <span class="fn">Mutation</span>:
+    gene: str
+    variant: str
+    effect_on_growth: float
+    effect_on_death: float
+    therapy_sensitivity: Dict[str, float] = field(default_factory=dict)
+
+MUTATION_LIBRARY = {
+    <span class="str">"TP53_R175H"</span>: Mutation(<span class="str">"TP53"</span>, <span class="str">"R175H"</span>, <span class="num">1.2</span>, <span class="num">0.5</span>, {<span class="str">"doxorubicin"</span>: <span class="num">0.5</span>}),
+    <span class="str">"KRAS_G12D"</span>:  Mutation(<span class="str">"KRAS"</span>, <span class="str">"G12D"</span>,  <span class="num">1.3</span>, <span class="num">0.7</span>, {<span class="str">"selumetinib"</span>: <span class="num">1.8</span>}),
+    <span class="str">"EGFR_L858R"</span>: Mutation(<span class="str">"EGFR"</span>, <span class="str">"L858R"</span>, <span class="num">1.25</span>,<span class="num">0.8</span>, {<span class="str">"erlotinib"</span>:   <span class="num">0.1</span>}),
+    <span class="str">"MYC_AMP"</span>:    Mutation(<span class="str">"MYC"</span>,  <span class="str">"AMP"</span>,   <span class="num">1.5</span>, <span class="num">0.6</span>, {<span class="str">"BET_inhibitor"</span>:<span class="num">1.5</span>}),
+}
+
+<span class="kw">class</span> <span class="fn">MutationProfile</span>:
+    <span class="kw">def</span> <span class="fn">__init__</span>(self):
+        self.active_mutations: List[Mutation] = []
+
+    <span class="kw">def</span> <span class="fn">add_mutation</span>(self, key: str):
+        <span class="kw">if</span> key <span class="kw">in</span> MUTATION_LIBRARY:
+            self.active_mutations.append(MUTATION_LIBRARY[key])
+
+    <span class="kw">def</span> <span class="fn">net_growth_multiplier</span>(self):
+        mult = <span class="num">1.0</span>
+        <span class="kw">for</span> m <span class="kw">in</span> self.active_mutations: mult *= m.effect_on_growth
+        <span class="kw">return</span> mult
+
+    <span class="kw">def</span> <span class="fn">drug_sensitivity</span>(self, drug_name: str):
+        sens = <span class="num">1.0</span>
+        <span class="kw">for</span> m <span class="kw">in</span> self.active_mutations:
+            <span class="kw">if</span> drug_name <span class="kw">in</span> m.therapy_sensitivity:
+                sens *= m.therapy_sensitivity[drug_name]
+        <span class="kw">return</span> sens`,
+  toxicity: `<span class="cm"># src/drug/toxicity.py</span>
+<span class="kw">import</span> numpy <span class="kw">as</span> np
+
+<span class="kw">class</span> <span class="fn">OrganToxicityModel</span>:
+    <span class="str">"""ODE-based organ toxicity: accumulation vs repair."""</span>
+
+    <span class="kw">def</span> <span class="fn">__init__</span>(self, organ, k_tox=<span class="num">0.05</span>, k_repair=<span class="num">0.02</span>, gamma=<span class="num">1.5</span>):
+        self.organ    = organ
+        self.k_tox    = k_tox     <span class="cm"># Accumulation rate</span>
+        self.k_repair = k_repair  <span class="cm"># Natural repair rate</span>
+        self.gamma    = gamma     <span class="cm"># Nonlinearity (>1 = threshold)</span>
+        self.score    = <span class="num">0.0</span>      <span class="cm"># 0 = healthy</span>
+
+    <span class="kw">def</span> <span class="fn">update</span>(self, drug_conc, dt=<span class="num">1.0</span>):
+        <span class="str">"""dT/dt = k_tox * C^gamma - k_repair * T"""</span>
+        accumulate = self.k_tox * (drug_conc ** self.gamma)
+        repair     = self.k_repair * self.score
+        self.score += (accumulate - repair) * dt
+        self.score  = np.clip(self.score, <span class="num">0.0</span>, <span class="num">1.0</span>)
+        <span class="kw">return</span> self.score
+
+    <span class="kw">def</span> <span class="fn">grade</span>(self):
+        <span class="cm"># CTCAE grading</span>
+        thresholds = [(<span class="num">0.1</span>,<span class="str">"Grade 0"</span>),(<span class="num">0.3</span>,<span class="str">"Grade 1"</span>),
+                      (<span class="num">0.5</span>,<span class="str">"Grade 2"</span>),(<span class="num">0.7</span>,<span class="str">"Grade 3"</span>),(<span class="num">1.0</span>,<span class="str">"Grade 4"</span>)]
+        <span class="kw">for</span> thresh, grade <span class="kw">in</span> thresholds:
+            <span class="kw">if</span> self.score <= thresh:
+                <span class="kw">return</span> grade
+        <span class="kw">return</span> <span class="str">"Grade 4"</span>`,
+  resistance: `<span class="cm"># src/drug/resistance.py</span>
+<span class="kw">import</span> numpy <span class="kw">as</span> np
+<span class="kw">from</span> scipy.integrate <span class="kw">import</span> solve_ivp
+
+<span class="kw">class</span> <span class="fn">DrugResistanceModel</span>:
+    <span class="str">"""Goldie-Coldman two-population resistance model."""</span>
+
+    <span class="kw">def</span> <span class="fn">__init__</span>(self):
+        self.r_S  = <span class="num">0.03</span>   <span class="cm"># Sensitive growth rate</span>
+        self.r_R  = <span class="num">0.025</span>  <span class="cm"># Resistant (fitness cost)</span>
+        self.K    = <span class="num">1e9</span>    <span class="cm"># Carrying capacity</span>
+        self.mu   = <span class="num">1e-6</span>   <span class="cm"># Mutation rate S → R</span>
+        self.rho  = <span class="num">1e-8</span>   <span class="cm"># Reversion rate R → S</span>
+        self.kill = <span class="num">0.15</span>   <span class="cm"># Drug kill rate at full effect</span>
+
+    <span class="kw">def</span> <span class="fn">odes</span>(self, t, y, drug_effect):
+        S, R = y
+        total = S + R
+        dS = (self.r_S*S*(<span class="num">1</span> - total/self.K)
+              - self.kill*drug_effect*S
+              - self.mu*S + self.rho*R)
+        dR = (self.r_R*R*(<span class="num">1</span> - total/self.K)
+              + self.mu*S - self.rho*R)
+        <span class="kw">return</span> [dS, dR]
+
+    <span class="kw">def</span> <span class="fn">simulate</span>(self, days, drug_effect):
+        S0, R0 = <span class="num">1e9</span>-<span class="num">1</span>, <span class="num">1</span>
+        sol = solve_ivp(
+            <span class="kw">lambda</span> t, y: self.odes(t, y, drug_effect),
+            (<span class="num">0</span>, days), [S0, R0], method=<span class="str">"RK45"</span>
+        )
+        <span class="kw">return</span> sol`,
+  rl: `<span class="cm"># src/rl/environment.py</span>
+<span class="kw">import</span> gymnasium <span class="kw">as</span> gym
+<span class="kw">import</span> numpy <span class="kw">as</span> np
+<span class="kw">from</span> gymnasium <span class="kw">import</span> spaces
+
+<span class="kw">class</span> <span class="fn">VirtualMouseEnv</span>(gym.Env):
+    <span class="str">"""OpenAI Gym-compatible cancer treatment RL environment."""</span>
+
+    <span class="kw">def</span> <span class="fn">__init__</span>(self, mouse, cancer_model, pk_model, pd_model, tox_model):
+        <span class="fn">super</span>().__init__()
+        self.mouse = mouse; self.cancer = cancer_model
+        self.pk = pk_model; self.pd = pd_model; self.tox = tox_model
+        self.day = <span class="num">0</span>; self.max_days = <span class="num">90</span>
+        <span class="cm"># State: tumor, resist_frac, tox_liver, tox_kidney, plasma_conc, ctl_count</span>
+        self.observation_space = spaces.Box(low=<span class="num">0</span>, high=<span class="num">1</span>, shape=(<span class="num">6</span>,))
+        self.action_space = spaces.Box(low=<span class="num">0</span>, high=<span class="num">1</span>, shape=(<span class="num">1</span>,))
+
+    <span class="kw">def</span> <span class="fn">step</span>(self, action):
+        dose = float(action[<span class="num">0</span>]) * <span class="num">20.0</span>   <span class="cm"># 0–20 mg/kg</span>
+        self.pk.administer(dose)
+        self.pk.advance(dt=<span class="num">24</span>)
+        effect = self.pd.effect(self.pk.C1)
+        self.cancer.advance(effect, dt=<span class="num">1</span>)
+        reward = self._compute_reward()
+        self.day += <span class="num">1</span>
+        done = (self.day >= self.max_days <span class="kw">or</span>
+                self.cancer.T < <span class="num">1e3</span> <span class="kw">or</span>
+                self.cancer.T > <span class="num">1e10</span>)
+        <span class="kw">return</span> self._get_obs(), reward, done, <span class="kw">False</span>, {}
+
+    <span class="kw">def</span> <span class="fn">_compute_reward</span>(self):
+        tumor_kill  = max(<span class="num">0</span>, <span class="num">1</span> - self.cancer.T/<span class="num">1e9</span>) * <span class="num">2.0</span>
+        tox_penalty = (self.tox[<span class="str">"liver"</span>].score + self.tox[<span class="str">"kidney"</span>].score) * <span class="num">1.5</span>
+        resist_pen  = self.cancer.resistance_fraction() * <span class="num">0.8</span>
+        <span class="kw">return</span> tumor_kill - tox_penalty - resist_pen
+
+<span class="cm"># Train with stable-baselines3:</span>
+<span class="cm"># from stable_baselines3 import PPO</span>
+<span class="cm"># model = PPO("MlpPolicy", env, verbose=1)</span>
+<span class="cm"># model.learn(total_timesteps=500_000)</span>`,
+  twin: `<span class="cm"># src/digital_twin/twin_core.py</span>
+<span class="kw">import</span> numpy <span class="kw">as</span> np
+<span class="kw">from</span> dataclasses <span class="kw">import</span> dataclass, asdict
+<span class="kw">from</span> typing <span class="kw">import</span> Dict
+
+<span class="kw">@dataclass</span>
+<span class="kw">class</span> <span class="fn">MouseState</span>:
+    tumor_volume_mm3:   float = <span class="num">0.0</span>
+    sensitive_cells:    float = <span class="num">0.0</span>
+    resistant_cells:    float = <span class="num">0.0</span>
+    ctl_count:          float = <span class="num">1e4</span>
+    plasma_drug_mgL:    float = <span class="num">0.0</span>
+    liver_toxicity:     float = <span class="num">0.0</span>
+    malat1_level:       float = <span class="num">1.0</span>
+    day:                int   = <span class="num">0</span>
+
+<span class="kw">class</span> <span class="fn">DigitalTwin</span>:
+    <span class="kw">def</span> <span class="fn">__init__</span>(self, physics_engine, initial_state: MouseState):
+        self.engine  = physics_engine
+        self.state   = initial_state
+        self.history = [asdict(initial_state)]
+
+    <span class="kw">def</span> <span class="fn">advance</span>(self, dt_days=<span class="num">1</span>, action=<span class="kw">None</span>):
+        new_state = self.engine.step(self.state, dt_days, action)
+        self.state = new_state
+        self.history.append(asdict(new_state))
+        <span class="kw">return</span> new_state
+
+    <span class="kw">def</span> <span class="fn">update_from_measurement</span>(self, obs: Dict[str, float]):
+        <span class="cm"># Kalman-like Bayesian update</span>
+        <span class="kw">for</span> key, val <span class="kw">in</span> obs.items():
+            <span class="kw">if</span> hasattr(self.state, key):
+                current = getattr(self.state, key)
+                updated = <span class="num">0.7</span>*current + <span class="num">0.3</span>*val
+                setattr(self.state, key, updated)
+
+    <span class="kw">def</span> <span class="fn">predict_trajectory</span>(self, days=<span class="num">30</span>, n_scenarios=<span class="num">100</span>):
+        <span class="str">"""Monte Carlo prediction with uncertainty."""</span>
+        trajectories = []
+        <span class="kw">for</span> _ <span class="kw">in</span> range(n_scenarios):
+            twin_copy = DigitalTwin(self.engine, MouseState(**asdict(self.state)))
+            traj = [asdict(twin_copy.state)]
+            <span class="kw">for</span> _ <span class="kw">in</span> range(days):
+                twin_copy.advance(dt_days=<span class="num">1</span>)
+                traj.append(asdict(twin_copy.state))
+            trajectories.append(traj)
+        <span class="kw">return</span> trajectories`,
+  main: `<span class="cm"># main.py — Entry point</span>
+<span class="kw">from</span> src.biology.mouse_physiology <span class="kw">import</span> MousePhysiology
+<span class="kw">from</span> src.drug.pharmacokinetics   <span class="kw">import</span> TwoCompartmentPK
+<span class="kw">from</span> src.drug.pharmacodynamics   <span class="kw">import</span> HillEquation, TumorPKPD
+<span class="kw">from</span> src.cancer.mutations        <span class="kw">import</span> MutationProfile
+<span class="kw">from</span> src.biology.lncrna          <span class="kw">import</span> LncRNARegulator
+<span class="kw">from</span> src.drug.resistance         <span class="kw">import</span> DrugResistanceModel
+<span class="kw">import</span> numpy <span class="kw">as</span> np
+
+<span class="cm"># 1. Initialize the virtual mouse</span>
+mouse = MousePhysiology(body_weight_g=<span class="num">25</span>, strain=<span class="str">"C57BL6"</span>)
+mouse.summary()
+
+<span class="cm"># 2. Set up lncRNA profile (your HNSCC research context)</span>
+lncrna = LncRNARegulator()
+lncrna.set_level(<span class="str">"MALAT1"</span>, <span class="num">2.5</span>)  <span class="cm"># Overexpressed</span>
+lncrna.set_level(<span class="str">"HOTAIR"</span>, <span class="num">1.8</span>)
+print(f<span class="str">"Oncogenic score: {lncrna.oncogenic_score():.2f}"</span>)
+
+<span class="cm"># 3. Add mutations</span>
+muts = MutationProfile()
+muts.add_mutation(<span class="str">"TP53_R175H"</span>)
+muts.add_mutation(<span class="str">"KRAS_G12D"</span>)
+print(f<span class="str">"Net growth multiplier: {muts.net_growth_multiplier():.2f}"</span>)
+
+<span class="cm"># 4. Run PK simulation — Cisplatin 10 mg/kg IV bolus</span>
+pk = TwoCompartmentPK(V1=<span class="num">1.2</span>, V2=<span class="num">3.0</span>, k12=<span class="num">0.28</span>, k21=<span class="num">0.18</span>, k10=<span class="num">0.45</span>)
+t_eval = np.linspace(<span class="num">0</span>, <span class="num">72</span>, <span class="num">720</span>)
+sol = pk.simulate((<span class="num">0</span>, <span class="num">72</span>), dose=<span class="num">10.0</span>, t_eval=t_eval)
+print(f<span class="str">"Peak concentration: {sol.y[0].max():.2f} mg/L"</span>)
+
+<span class="cm"># 5. PD effect</span>
+pd = HillEquation(emax=<span class="num">0.9</span>, ec50=<span class="num">2.0</span>, hill_n=<span class="num">1.5</span>)
+print(f<span class="str">"Effect at peak: {pd.effect(sol.y[0].max())*100:.1f}%"</span>)
+
+<span class="cm"># 6. Resistance simulation</span>
+res = DrugResistanceModel()
+res_sol = res.simulate(days=<span class="num">90</span>, drug_effect=<span class="num">0.7</span>)
+S_final, R_final = res_sol.y[<span class="num">0</span>][-<span class="num">1</span>], res_sol.y[<span class="num">1</span>][-<span class="num">1</span>]
+print(f<span class="str">"Resistance fraction at day 90: {R_final/(S_final+R_final)*100:.2f}%"</span>)
+
+print(<span class="str">"\\n✅ Virtual Mouse Model simulation complete!"</span>)`
+};
+
+function showCode(key) {
+  document.getElementById('code-display').innerHTML = codeSnippets[key] || '<span class="cm">// Select a module above</span>';
+}
+showCode('physiology');
+
+// Init charts on load
+window.addEventListener('load', () => {
+  setTimeout(() => {
+    runTumorModel();
+    runPKModel();
+  }, 200);
+});
+</script>
+</body>
+</html>
