@@ -265,7 +265,18 @@
     <!-- ===== IMMUNE ===== -->
     <div class="page" id="page-immune">
       <div class="page-title">Immune system simulation</div>
-      <div class="page-sub">Kirschner-Panetta ODE model — CTL · NK cells · Tregs · IL-2</div>
+      <div class="page-sub">Kirschner-Panetta ODE model — CTL · NK cells · Tregs · IL-2</div> <div class="ref-box">
+  <div class="ref-toggle" onclick="toggleRef('ref-immune')">
+    📖 Scientific References <span id="ref-immune-arrow">▶</span>
+  </div>
+  <div class="ref-content" id="ref-immune">
+    <ol>
+      <li>Kirschner D & Panetta JC (1998). Modeling immunotherapy of the tumor–immune interaction. <em>J Math Biol</em> 37:235–252.</li>
+      <li>de Pillis LG & Radunskaya A (2001). A mathematical tumor model with immune resistance. <em>J Theor Med</em> 3:79–100.</li>
+      <li>Eftimie R et al. (2011). Interactions between the immune system and cancer. <em>Bull Math Biol</em> 73:2–32.</li>
+    </ol>
+  </div>
+</div>
       <div class="grid-4 gap-md">
         <div class="metric"><div class="metric-label">CTL count</div><div class="metric-val v-blue" id="im-ctl">10,000</div><div class="metric-sub">CD8+ T cells</div></div>
         <div class="metric"><div class="metric-label">NK cells</div><div class="metric-val v-green" id="im-nk">5,000</div><div class="metric-sub">Natural killer</div></div>
